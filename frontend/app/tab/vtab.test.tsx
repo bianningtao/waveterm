@@ -60,4 +60,16 @@ describe("VTab badges", () => {
         expect(markup).not.toContain("fa-flag");
         expect(markup).toContain("#4ade80");
     });
+
+    it("renders pinned tabs with a pin indicator", () => {
+        const markup = renderVTab({
+            id: "tab-3",
+            name: "Pinned Shell",
+            isPinned: true,
+        });
+
+        expect(markup).toContain("data-pinned=\"true\"");
+        expect(markup).toContain("fa-thumbtack");
+        expect(markup).toContain("Pinned Tab");
+    });
 });

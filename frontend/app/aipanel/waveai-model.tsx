@@ -4,6 +4,7 @@
 import {
     UseChatSendMessageType,
     UseChatSetMessagesType,
+    WaveAIChatHistoryEntry,
     WaveUIMessage,
     WaveUIMessagePart,
 } from "@/app/aipanel/aitypes";
@@ -89,6 +90,8 @@ export class WaveAIModel {
     inputAtom: jotai.PrimitiveAtom<string> = jotai.atom("");
     isLoadingChatAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(false);
     isChatEmptyAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(true);
+    historyOpenAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(false);
+    isHistoryLoadingAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(false);
     isWaveAIFocusedAtom!: jotai.Atom<boolean>;
     panelVisibleAtom!: jotai.Atom<boolean>;
     restoreBackupModalToolCallId: jotai.PrimitiveAtom<string | null> = jotai.atom(null) as jotai.PrimitiveAtom<
@@ -353,6 +356,58 @@ export class WaveAIModel {
         const messages: UIMessage[] = chatData?.messages ?? [];
         globalStore.set(this.isChatEmptyAtom, messages.length === 0);
         return messages as WaveUIMessage[];
+    }
+
+    async listChatHistory(): Promise<WaveAIChatHistoryEntry[]> {
+        return await TabRpcClient.wshRpcCall("listwaveaichats", null, undefined);
+    }
+
+    openChatHistory() {
+        globalStore.set(this.historyOpenAtom, true);
+    }
+
+    closeChatHistory() {
+        globalStore.set(this.historyOpenAtom, false);
+    }
+
+    async restoreChat(chatIdValue: string): Promise<void> {
+        if (!chatIdValue) {
+            return;
+        }
+        this.useChatStop?.();
+        this.clearFiles();
+        this.clearError();
+        globalStore.set(this.isLoadingChatAtom, true);
+        try {
+            const messages = await this.reloadChatFromBackend(chatIdValue);
+            globalStore.set(this.chatId, chatIdValue);
+            await RpcApi.SetRTInfoCommand(TabRpcClient, {
+                oref: this.orefContext,
+                data: { "waveai:chatid": chatIdValue },
+            });
+            this.useChatSetMessages?.(messages);
+            this.closeChatHistory();
+            setTimeout(() => {
+                this.scrollToBottom();
+                this.focusInput();
+            }, 100);
+        } finally {
+            globalStore.set(this.isLoadingChatAtom, false);
+        }
+    }
+
+    async deleteChatHistory(chatIdValue: string): Promise<void> {
+        if (!chatIdValue) {
+            return;
+        }
+        await TabRpcClient.wshRpcCall("deletewaveaichat", { chatid: chatIdValue }, undefined);
+        if (chatIdValue === globalStore.get(this.chatId)) {
+            this.clearChat();
+        }
+    }
+
+    async renameChatHistory(chatIdValue: string, title: string): Promise<void> {
+        await TabRpcClient.wshRpcCall("renamewaveaichat", { chatid: chatIdValue, title }, undefined);
     }
 
     async stopResponse() {

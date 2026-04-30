@@ -30,6 +30,42 @@ export type TabBadgesEnv = WaveEnvSubset<{
 const BadgeMap = new Map<string, PrimitiveAtom<Badge>>();
 const TabBadgeAtomCache = new Map<string, Atom<Badge[]>>();
 
+type AgentNotificationStatus = "running" | "waiting" | "done" | "error";
+
+type AgentNotificationBadgeSpec = {
+    icon: string;
+    color: string;
+    priority: number;
+    label: string;
+};
+
+const AgentNotificationBadges: Record<AgentNotificationStatus, AgentNotificationBadgeSpec> = {
+    running: {
+        icon: "spinner+spin",
+        color: "#38bdf8",
+        priority: 2,
+        label: "Agent running",
+    },
+    waiting: {
+        icon: "bell",
+        color: "#f59e0b",
+        priority: 3,
+        label: "Agent waiting",
+    },
+    done: {
+        icon: "circle-check",
+        color: "#22c55e",
+        priority: 1,
+        label: "Agent done",
+    },
+    error: {
+        icon: "triangle-exclamation",
+        color: "#ef4444",
+        priority: 4,
+        label: "Agent error",
+    },
+};
+
 function publishBadgeEvent(eventData: WaveEvent, env?: BadgeEnv) {
     if (env != null) {
         fireAndForget(() => env.rpc.EventPublishCommand(TabRpcClient, eventData));
@@ -177,6 +213,34 @@ function setBadge(blockId: string, badge: Omit<Badge, "badgeid"> & { badgeid?: s
     publishBadgeEvent(eventData, env);
 }
 
+function getAgentNotificationBadge(status: AgentNotificationStatus): Omit<Badge, "badgeid"> {
+    const spec = AgentNotificationBadges[status];
+    return {
+        icon: spec.icon,
+        color: spec.color,
+        priority: spec.priority,
+    };
+}
+
+function setAgentNotificationBadge(blockId: string, status: AgentNotificationStatus, env?: BadgeEnv) {
+    setBadge(blockId, getAgentNotificationBadge(status), env);
+}
+
+function getBadgeStatus(badge: Badge | null): AgentNotificationStatus | null {
+    if (badge == null) {
+        return null;
+    }
+    const match = Object.entries(AgentNotificationBadges).find(([, spec]) => {
+        return badge.icon === spec.icon && badge.color === spec.color && badge.priority === spec.priority;
+    });
+    return (match?.[0] as AgentNotificationStatus) ?? null;
+}
+
+function getBadgeStatusLabel(badge: Badge | null): string | null {
+    const status = getBadgeStatus(badge);
+    return status == null ? null : AgentNotificationBadges[status].label;
+}
+
 function clearBadgeById(blockId: string, badgeId: string, env?: BadgeEnv) {
     const oref = WOS.makeORef("block", blockId);
     const eventData: WaveEvent = {
@@ -256,10 +320,14 @@ export {
     clearBadgesForBlockOnFocus,
     clearBadgesForTab,
     clearBadgesForTabOnFocus,
+    getAgentNotificationBadge,
     getBadgeAtom,
+    getBadgeStatus,
+    getBadgeStatusLabel,
     getBlockBadgeAtom,
     getTabBadgeAtom,
     loadBadges,
+    setAgentNotificationBadge,
     setBadge,
     setupBadgesSubscription,
     sortBadges,

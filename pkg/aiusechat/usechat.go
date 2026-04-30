@@ -563,6 +563,7 @@ func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, me
 	if err := chatstore.DefaultChatStore.PostMessage(chatOpts.ChatId, &chatOpts.Config, convertedMessage); err != nil {
 		return fmt.Errorf("failed to store message: %w", err)
 	}
+	chatstore.DefaultChatStore.SetChatTitleFromText(chatOpts.ChatId, firstTextMessagePart(message))
 
 	metrics, err := RunAIChat(ctx, sseHandler, backend, chatOpts)
 	if metrics != nil {
@@ -588,6 +589,18 @@ func WaveAIPostMessageWrap(ctx context.Context, sseHandler *sse.SSEHandlerCh, me
 		sendAIMetricsTelemetry(ctx, metrics)
 	}
 	return err
+}
+
+func firstTextMessagePart(message *uctypes.AIMessage) string {
+	if message == nil {
+		return ""
+	}
+	for _, part := range message.Parts {
+		if part.Type == uctypes.AIMessagePartTypeText && strings.TrimSpace(part.Text) != "" {
+			return part.Text
+		}
+	}
+	return ""
 }
 
 func sendAIMetricsTelemetry(ctx context.Context, metrics *uctypes.AIMetrics) {
@@ -728,6 +741,11 @@ func WaveAIPostMessageHandler(w http.ResponseWriter, r *http.Request) {
 	if err := WaveAIPostMessageWrap(r.Context(), sseHandler, &req.Msg, chatOpts); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to post message: %v", err), http.StatusInternalServerError)
 		return
+	}
+	if aiChat := chatstore.DefaultChatStore.Get(req.ChatID); aiChat != nil {
+		if uiChat, err := ConvertAIChatToUIChat(aiChat); err == nil {
+			chatstore.DefaultChatStore.SaveUISnapshot(uiChat)
+		}
 	}
 }
 

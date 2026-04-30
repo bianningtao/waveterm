@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getTabBadgeAtom } from "@/app/store/badge";
+import { t } from "@/app/i18n";
 import { refocusNode } from "@/app/store/global";
 import { getTabModelByTabId } from "@/app/store/tab-model";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
@@ -13,6 +14,7 @@ import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { makeORef } from "../store/wos";
+import { isPinnedTab } from "./pinnedtab";
 import { TabBadges } from "./tabbadges";
 import "./tab.scss";
 import { buildTabContextMenu } from "./tabcontextmenu";
@@ -42,6 +44,7 @@ interface TabVProps {
     isNew: boolean;
     badges?: Badge[] | null;
     flagColor?: string | null;
+    isPinned: boolean;
     onClick: () => void;
     onClose: (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null) => void;
     onDragStart: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -62,6 +65,7 @@ const TabV = forwardRef<HTMLDivElement, TabVProps>((props, ref) => {
         isNew,
         badges,
         flagColor,
+        isPinned,
         onClick,
         onClose,
         onDragStart,
@@ -185,11 +189,14 @@ const TabV = forwardRef<HTMLDivElement, TabVProps>((props, ref) => {
                 active,
                 dragging: isDragging,
                 "new-tab": isNew,
+                pinned: isPinned,
             })}
             onMouseDown={onDragStart}
             onClick={onClick}
             onContextMenu={onContextMenu}
             data-tab-id={tabId}
+            data-pinned={isPinned ? "true" : undefined}
+            title={isPinned ? tabName : undefined}
         >
             {showDivider && <div className="tab-divider" />}
             <div className="tab-inner">
@@ -204,12 +211,17 @@ const TabV = forwardRef<HTMLDivElement, TabVProps>((props, ref) => {
                 >
                     {displayName}
                 </div>
+                {isPinned && !isEditable && (
+                    <div className="pinned-icon" aria-label={t("Pinned Tab")} title={t("Pinned Tab")}>
+                        <i className="fa fa-solid fa-thumbtack" />
+                    </div>
+                )}
                 <TabBadges badges={badges} flagColor={flagColor} />
                 <Button
                     className="ghost grey close"
                     onClick={onClose}
                     onMouseDown={handleMouseDownOnClose}
-                    title="Close Tab"
+                    title={t("Close Tab")}
                 >
                     <i className="fa fa-solid fa-xmark" />
                 </Button>
@@ -231,13 +243,27 @@ interface TabProps {
     onClose: (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null) => void;
     onDragStart: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     onLoaded: () => void;
+    onPinnedChange: () => void;
 }
 
 const TabInner = forwardRef<HTMLDivElement, TabProps>((props, ref) => {
-    const { id, active, showDivider, isDragging, tabWidth, isNew, onLoaded, onSelect, onClose, onDragStart } = props;
+    const {
+        id,
+        active,
+        showDivider,
+        isDragging,
+        tabWidth,
+        isNew,
+        onLoaded,
+        onPinnedChange,
+        onSelect,
+        onClose,
+        onDragStart,
+    } = props;
     const env = useWaveEnv<TabEnv>();
     const [tabData, _] = env.wos.useWaveObjectValue<Tab>(makeORef("tab", id));
     const badges = useAtomValue(getTabBadgeAtom(id, env));
+    const isPinned = isPinnedTab(tabData);
 
     const rawFlagColor = tabData?.meta?.["tab:flagcolor"];
     let flagColor: string | null = null;
@@ -260,6 +286,10 @@ const TabInner = forwardRef<HTMLDivElement, TabProps>((props, ref) => {
             loadedRef.current = true;
         }
     }, [onLoaded]);
+
+    useEffect(() => {
+        onPinnedChange();
+    }, [isPinned, onPinnedChange]);
 
     useEffect(() => {
         const cb = () => renameRef.current?.();
@@ -304,6 +334,7 @@ const TabInner = forwardRef<HTMLDivElement, TabProps>((props, ref) => {
             isNew={isNew}
             badges={badges}
             flagColor={flagColor}
+            isPinned={isPinned}
             onClick={handleTabClick}
             onClose={onClose}
             onDragStart={onDragStart}

@@ -44,3 +44,9 @@ docsite/
 .superpowers
 docs/superpowers
 .claude
+
+# Local agent process notes and validation scripts
+process/*
+!process/.gitkeep
+!process/README.md
+tests/*

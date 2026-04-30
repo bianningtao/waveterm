@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { BlockNodeModel } from "@/app/block/blocktypes";
-import { setBadge } from "@/app/store/badge";
+import { setAgentNotificationBadge } from "@/app/store/badge";
 import { getFileSubject } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
@@ -266,7 +266,7 @@ export class TermWrap {
                 const bellIndicatorEnabled =
                     globalStore.get(getOverrideConfigAtom(this.blockId, "term:bellindicator")) ?? false;
                 if (bellIndicatorEnabled) {
-                    setBadge(this.blockId, { icon: "bell", color: "#fbbf24", priority: 1 });
+                    setAgentNotificationBadge(this.blockId, "waiting");
                 }
                 return true;
             })

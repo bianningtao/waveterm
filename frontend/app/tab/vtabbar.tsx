@@ -12,6 +12,7 @@ import { validateCssColor } from "@/util/color-validator";
 import { cn, fireAndForget } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { confirmClosePinnedTab, isPinnedTab } from "./pinnedtab";
 import { buildTabBarContextMenu, buildTabContextMenu } from "./tabcontextmenu";
 import { UpdateStatusBanner } from "./updatebanner";
 import { VTab, VTabItem } from "./vtab";
@@ -93,7 +94,7 @@ interface VTabWrapperProps {
     hoverResetVersion: number;
     index: number;
     onSelect: () => void;
-    onClose: () => void;
+    onClose: (isPinned: boolean) => void;
     onRename: (newName: string) => void;
     onDragStart: (event: React.DragEvent<HTMLDivElement>) => void;
     onDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -121,6 +122,7 @@ function VTabWrapper({
     const env = useWaveEnv<VTabBarEnv>();
     const [tabData] = env.wos.useWaveObjectValue<Tab>(makeORef("tab", tabId));
     const badges = useAtomValue(getTabBadgeAtom(tabId, env));
+    const isPinned = isPinnedTab(tabData);
     const renameRef = useRef<(() => void) | null>(null);
     const tabModel = getTabModelByTabId(tabId, env);
 
@@ -150,16 +152,24 @@ function VTabWrapper({
         name: tabData?.name ?? "",
         badges,
         flagColor,
+        isPinned,
     };
+
+    const handleClose = useCallback(() => {
+        if (isPinned && !confirmClosePinnedTab()) {
+            return;
+        }
+        onClose(isPinned);
+    }, [isPinned, onClose]);
 
     const handleContextMenu = useCallback(
         (e: React.MouseEvent<HTMLDivElement>) => {
             e.preventDefault();
             e.stopPropagation();
-            const menu = buildTabContextMenu(tabId, renameRef, () => onClose(), env);
+            const menu = buildTabContextMenu(tabId, renameRef, () => handleClose(), env);
             env.showContextMenu(menu, e);
         },
-        [tabId, onClose, env]
+        [tabId, handleClose, env]
     );
 
     return (
@@ -171,7 +181,7 @@ function VTabWrapper({
             isDragging={isDragging}
             isReordering={isReordering}
             onSelect={onSelect}
-            onClose={onClose}
+            onClose={handleClose}
             onRename={onRename}
             onContextMenu={handleContextMenu}
             onDragStart={onDragStart}
@@ -187,6 +197,7 @@ function VTabWrapper({
 export function VTabBar({ workspace, className }: VTabBarProps) {
     const env = useWaveEnv<VTabBarEnv>();
     const activeTabId = useAtomValue(env.atoms.staticTabId);
+    const confirmClose = useAtomValue(env.getSettingsKeyAtom("tab:confirmclose")) ?? false;
     const reinitVersion = useAtomValue(env.atoms.reinitVersion);
     const documentHasFocus = useAtomValue(env.atoms.documentHasFocus);
     const tabIds = workspace?.tabids ?? [];
@@ -374,7 +385,11 @@ export function VTabBar({ workspace, className }: VTabBarProps) {
                             hoverResetVersion={hoverResetVersion}
                             index={index}
                             onSelect={() => env.electron.setActiveTab(tabId)}
-                            onClose={() => fireAndForget(() => env.electron.closeTab(workspace.oid, tabId, false))}
+                            onClose={(isPinned) =>
+                                fireAndForget(() =>
+                                    env.electron.closeTab(workspace.oid, tabId, isPinned ? false : confirmClose)
+                                )
+                            }
                             onRename={(newName) =>
                                 fireAndForget(() => env.rpc.UpdateTabNameCommand(TabRpcClient, tabId, newName))
                             }
