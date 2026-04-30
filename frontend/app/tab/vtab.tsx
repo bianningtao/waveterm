@@ -1,6 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/app/i18n";
 import { refocusNode } from "@/app/store/global";
 import { validateCssColor } from "@/util/color-validator";
 import { cn } from "@/util/util";
@@ -15,6 +16,7 @@ export interface VTabItem {
     badge?: Badge | null;
     badges?: Badge[] | null;
     flagColor?: string | null;
+    isPinned?: boolean;
 }
 
 interface VTabProps {
@@ -147,8 +149,9 @@ export function VTab({
 
     return (
         <div
-            draggable
+            draggable={!tab.isPinned}
             data-tabid={tab.id}
+            data-pinned={tab.isPinned ? "true" : undefined}
             onClick={onSelect}
             onDoubleClick={(event) => {
                 event.stopPropagation();
@@ -185,6 +188,13 @@ export function VTab({
                 flagColor={flagColor}
                 className="mr-1 min-w-[16px] shrink-0 static top-auto left-auto z-auto h-[16px] w-auto translate-y-0 justify-start px-[2px] py-[1px] [&_i]:text-[10px]"
             />
+            {tab.isPinned && (
+                <i
+                    className="fa fa-solid fa-thumbtack relative z-10 mr-1 text-[10px] text-secondary"
+                    aria-label={t("Pinned Tab")}
+                    title={t("Pinned Tab")}
+                />
+            )}
             <div
                 ref={editableRef}
                 className={cn(

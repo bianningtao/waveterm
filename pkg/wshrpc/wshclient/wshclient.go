@@ -221,6 +221,12 @@ func DeleteSubBlockCommand(w *wshutil.WshRpc, data wshrpc.CommandDeleteBlockData
 	return err
 }
 
+// command "deletewaveaichat", wshserver.DeleteWaveAIChatCommand
+func DeleteWaveAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandGetWaveAIChatData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "deletewaveaichat", data, opts)
+	return err
+}
+
 // command "dismisswshfail", wshserver.DismissWshFailCommand
 func DismissWshFailCommand(w *wshutil.WshRpc, data string, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "dismisswshfail", data, opts)
@@ -616,6 +622,12 @@ func ListAllEditableAppsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshr
 	return resp, err
 }
 
+// command "listwaveaichats", wshserver.ListWaveAIChatsCommand
+func ListWaveAIChatsCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.WaveAIChatHistoryEntry, error) {
+	resp, err := sendRpcRequestCallHelper[[]wshrpc.WaveAIChatHistoryEntry](w, "listwaveaichats", nil, opts)
+	return resp, err
+}
+
 // command "macosversion", wshserver.MacOSVersionCommand
 func MacOSVersionCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (string, error) {
 	resp, err := sendRpcRequestCallHelper[string](w, "macosversion", nil, opts)
@@ -797,6 +809,12 @@ func RemoteWriteFileCommand(w *wshutil.WshRpc, data wshrpc.FileData, opts *wshrp
 // command "renameappfile", wshserver.RenameAppFileCommand
 func RenameAppFileCommand(w *wshutil.WshRpc, data wshrpc.CommandRenameAppFileData, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "renameappfile", data, opts)
+	return err
+}
+
+// command "renamewaveaichat", wshserver.RenameWaveAIChatCommand
+func RenameWaveAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandRenameWaveAIChatData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "renamewaveaichat", data, opts)
 	return err
 }
 

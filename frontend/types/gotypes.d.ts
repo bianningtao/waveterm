@@ -619,6 +619,12 @@ declare global {
         tofilename: string;
     };
 
+    // wshrpc.CommandRenameWaveAIChatData
+    type CommandRenameWaveAIChatData = {
+        chatid: string;
+        title: string;
+    };
+
     // wshrpc.CommandResolveIdsData
     type CommandResolveIdsData = {
         blockid: string;
@@ -1156,6 +1162,7 @@ declare global {
         "sysinfo:type"?: string;
         "tab:flagcolor"?: string;
         "tab:background"?: string;
+        "tab:pinned"?: boolean;
         "bg:*"?: boolean;
         bg?: string;
         "bg:opacity"?: number;
@@ -1387,6 +1394,7 @@ declare global {
         "app:disablectrlshiftdisplay"?: boolean;
         "app:focusfollowscursor"?: string;
         "app:tabbar"?: string;
+        "app:locale"?: string;
         "feature:waveappbuilder"?: boolean;
         "ai:*"?: boolean;
         "ai:preset"?: string;
@@ -1589,6 +1597,7 @@ declare global {
         "debug:panictype"?: string;
         "block:view"?: string;
         "block:controller"?: string;
+        "block:subblock"?: boolean;
         "ai:backendtype"?: string;
         "ai:local"?: boolean;
         "wsh:cmd"?: string;
@@ -2011,6 +2020,17 @@ declare global {
     // wconfig.WatcherUpdate
     type WatcherUpdate = {
         fullconfig: FullConfigType;
+    };
+
+    // wshrpc.WaveAIChatHistoryEntry
+    type WaveAIChatHistoryEntry = {
+        chatid: string;
+        title: string;
+        updatedts: number;
+        apitype: string;
+        model: string;
+        apiversion?: string;
+        messagecount: number;
     };
 
 

@@ -156,6 +156,9 @@ type WshRpcInterface interface {
 	AiSendMessageCommand(ctx context.Context, data AiMessageData) error
 	WaveAIEnableTelemetryCommand(ctx context.Context) error
 	GetWaveAIChatCommand(ctx context.Context, data CommandGetWaveAIChatData) (*uctypes.UIChat, error)
+	ListWaveAIChatsCommand(ctx context.Context) ([]WaveAIChatHistoryEntry, error)
+	DeleteWaveAIChatCommand(ctx context.Context, data CommandGetWaveAIChatData) error
+	RenameWaveAIChatCommand(ctx context.Context, data CommandRenameWaveAIChatData) error
 	GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
 	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
 	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
@@ -341,7 +344,6 @@ type CommandEventReadHistoryData struct {
 	MaxItems int    `json:"maxitems"`
 }
 
-
 type CpuDataRequest struct {
 	Id    string `json:"id"`
 	Count int    `json:"count"`
@@ -501,6 +503,21 @@ type AiMessageData struct {
 
 type CommandGetWaveAIChatData struct {
 	ChatId string `json:"chatid"`
+}
+
+type WaveAIChatHistoryEntry struct {
+	ChatId       string `json:"chatid"`
+	Title        string `json:"title"`
+	UpdatedTs    int64  `json:"updatedts"`
+	APIType      string `json:"apitype"`
+	Model        string `json:"model"`
+	APIVersion   string `json:"apiversion,omitempty"`
+	MessageCount int    `json:"messagecount"`
+}
+
+type CommandRenameWaveAIChatData struct {
+	ChatId string `json:"chatid"`
+	Title  string `json:"title"`
 }
 
 type CommandWaveAIToolApproveData struct {

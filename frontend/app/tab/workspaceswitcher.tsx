@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { t } from "@/app/i18n";
 import {
     ExpandableMenu,
     ExpandableMenuItem,
@@ -123,7 +124,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
                 <span className="workspace-icon">{workspaceIcon}</span>
             </PopoverButton>
             <PopoverContent className="workspace-switcher-content">
-                <div className="title">{isActiveWorkspaceSaved ? "Switch workspace" : "Open workspace"}</div>
+                <div className="title">{isActiveWorkspaceSaved ? t("Switch workspace") : t("Open workspace")}</div>
                 <OverlayScrollbarsComponent className={"scrollable"} options={{ scrollbars: { autoHide: "leave" } }}>
                     <ExpandableMenu noIndent singleOpen>
                         {workspaceList.map((entry, i) => (
@@ -138,14 +139,14 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
                             <ExpandableMenuItemLeftElement>
                                 <i className="fa-sharp fa-solid fa-plus"></i>
                             </ExpandableMenuItemLeftElement>
-                            <div className="content">Create new workspace</div>
+                            <div className="content">{t("Create new workspace")}</div>
                         </ExpandableMenuItem>
                     ) : (
                         <ExpandableMenuItem onClick={() => saveWorkspace()}>
                             <ExpandableMenuItemLeftElement>
                                 <i className="fa-sharp fa-solid fa-floppy-disk"></i>
                             </ExpandableMenuItemLeftElement>
-                            <div className="content">Save workspace</div>
+                            <div className="content">{t("Save workspace")}</div>
                         </ExpandableMenuItem>
                     )}
                 </div>
@@ -189,7 +190,7 @@ const WorkspaceSwitcherItem = ({
         elemtype: "iconbutton",
         className: "edit",
         icon: "pencil",
-        title: "Edit workspace",
+        title: t("Edit workspace"),
         click: (e) => {
             e.stopPropagation();
             if (editingWorkspace === workspace.oid) {
@@ -204,7 +205,7 @@ const WorkspaceSwitcherItem = ({
         className: "window",
         noAction: true,
         icon: isCurrentWorkspace ? "check" : "window",
-        title: isCurrentWorkspace ? "This is your current workspace" : "This workspace is open",
+        title: isCurrentWorkspace ? t("This is your current workspace") : t("This workspace is open"),
     };
 
     const isEditing = editingWorkspace === workspace.oid;

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CenteredDiv } from "@/app/element/quickelems";
+import { t } from "@/app/i18n";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { BlockHeaderSuggestionControl } from "@/app/suggestion/suggestion";
@@ -10,6 +11,7 @@ import { isBlank, makeConnRoute } from "@/util/util";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { memo, useEffect } from "react";
 import { CSVView } from "./csvview";
+import { ExcelPreview, WordPreview } from "./office-preview";
 import { DirectoryPreview } from "./preview-directory";
 import { CodeEditPreview } from "./preview-edit";
 import { ErrorOverlay } from "./preview-error-overlay";
@@ -29,6 +31,8 @@ const SpecializedViewMap: { [view: string]: ({ model }: SpecializedViewProps) =>
     codeedit: CodeEditPreview,
     csv: CSVViewPreview,
     directory: DirectoryPreview,
+    word: WordPreview,
+    excel: ExcelPreview,
 };
 
 function canPreview(mimeType: string): boolean {
@@ -59,7 +63,11 @@ const SpecializedView = memo(({ parentRef, model }: SpecializedViewProps) => {
     }
     const SpecializedViewComponent = SpecializedViewMap[specializedView.specializedView];
     if (!SpecializedViewComponent) {
-        return <CenteredDiv>Invalid Specialized View Component ({specializedView.specializedView})</CenteredDiv>;
+        return (
+            <CenteredDiv>
+                {t("Invalid Specialized View Component ({view})", { view: specializedView.specializedView })}
+            </CenteredDiv>
+        );
     }
     return <SpecializedViewComponent key={path} model={model} parentRef={parentRef} />;
 });
@@ -161,7 +169,7 @@ function PreviewView({
                 onSelect={handleSelect}
                 onTab={handleTab}
                 fetchSuggestions={fetchSuggestionsFn}
-                placeholderText="Open File..."
+                placeholderText={t("Open File...")}
             />
         </>
     );

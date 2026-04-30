@@ -12,6 +12,7 @@ import { useAtomValue } from "jotai";
 import { OverlayScrollbars } from "overlayscrollbars";
 import { createRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { debounce } from "throttle-debounce";
+import { confirmClosePinnedTab, TabPinnedWidth } from "./pinnedtab";
 import { Tab } from "./tab";
 import "./tabbar.scss";
 import { TabBarEnv } from "./tabbarenv";
@@ -101,6 +102,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const [draggingTab, setDraggingTab] = useState<string>();
     const [tabsLoaded, setTabsLoaded] = useState({});
     const [newTabId, setNewTabId] = useState<string | null>(null);
+    const [pinLayoutVersion, setPinLayoutVersion] = useState(0);
 
     const tabbarWrapperRef = useRef<HTMLDivElement>(null);
     const tabBarRef = useRef<HTMLDivElement>(null);
@@ -166,7 +168,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         tabRefs.current.forEach((ref) => {
             if (ref.current) {
                 newStartPositions.push(cumulativeLeft);
-                cumulativeLeft += ref.current.getBoundingClientRect().width; // Add each tab's actual width to the cumulative position
+                cumulativeLeft += ref.current.dataset.pinned === "true" ? TabPinnedWidth : tabWidthRef.current;
             }
         });
 
@@ -202,27 +204,34 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         const spaceForTabs = tabbarWrapperWidth - nonTabElementsWidth;
 
         const numberOfTabs = tabIds.length;
+        const pinnedCount = tabRefs.current.filter((ref) => ref.current?.dataset.pinned === "true").length;
+        const normalTabCount = numberOfTabs - pinnedCount;
 
         // Compute the ideal width per tab by dividing the available space by the number of tabs
-        let idealTabWidth = spaceForTabs / numberOfTabs;
+        let idealTabWidth =
+            normalTabCount > 0 ? (spaceForTabs - pinnedCount * TabPinnedWidth) / normalTabCount : TabPinnedWidth;
 
         // Apply min/max constraints
         idealTabWidth = Math.max(TabMinWidth, Math.min(idealTabWidth, TabDefaultWidth));
 
         // Determine if the tab bar needs to be scrollable
-        const newScrollable = idealTabWidth * numberOfTabs > spaceForTabs;
+        const totalTabsWidth = idealTabWidth * normalTabCount + pinnedCount * TabPinnedWidth;
+        const newScrollable = totalTabsWidth > spaceForTabs;
 
         // Apply the calculated width and position to all tabs
+        let cumulativeLeft = 0;
         tabRefs.current.forEach((ref, index) => {
             if (ref.current) {
+                const tabWidth = ref.current.dataset.pinned === "true" ? TabPinnedWidth : idealTabWidth;
                 if (animate) {
                     ref.current.classList.add("animate");
                 } else {
                     ref.current.classList.remove("animate");
                 }
-                ref.current.style.width = `${idealTabWidth}px`;
-                ref.current.style.transform = `translate3d(${index * idealTabWidth}px,0,0)`;
+                ref.current.style.width = `${tabWidth}px`;
+                ref.current.style.transform = `translate3d(${cumulativeLeft}px,0,0)`;
                 ref.current.style.opacity = "1";
+                cumulativeLeft += tabWidth;
             }
         });
 
@@ -254,7 +263,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const handleResizeTabs = useCallback(() => {
         setSizeAndPosition();
         saveTabsPositionDebounced();
-    }, [tabIds, newTabId, isFullScreen]);
+    }, [tabIds, newTabId, isFullScreen, pinLayoutVersion]);
 
     // update layout on reinit version
     const reinitVersion = useAtomValue(env.atoms.reinitVersion);
@@ -292,6 +301,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         appUpdateStatus,
         zoomFactor,
         showMenuBar,
+        pinLayoutVersion,
     ]);
 
     const getDragDirection = (currentX: number) => {
@@ -483,6 +493,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const handleDragStart = useCallback(
         (event: React.MouseEvent<HTMLDivElement, MouseEvent>, tabId: string, ref: React.RefObject<HTMLDivElement>) => {
             if (event.button !== 0) return;
+            if (ref.current?.dataset.pinned === "true") return;
 
             const tabIndex = tabIds.indexOf(tabId);
             const tabStartX = dragStartPositions[tabIndex]; // Starting X position of the tab
@@ -541,8 +552,13 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
 
     const handleCloseTab = (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | null, tabId: string) => {
         event?.stopPropagation();
+        const tabRef = tabRefs.current.find((ref) => ref.current?.dataset.tabId === tabId);
+        const isPinned = tabRef?.current?.dataset.pinned === "true";
+        if (isPinned && !confirmClosePinnedTab()) {
+            return;
+        }
         env.electron
-            .closeTab(workspace.oid, tabId, confirmClose)
+            .closeTab(workspace.oid, tabId, isPinned ? false : confirmClose)
             .then((didClose) => {
                 if (didClose) {
                     tabsWrapperRef.current?.style.setProperty("--tabs-wrapper-transition", "width 0.3s ease");
@@ -564,13 +580,18 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         });
     }, []);
 
+    const handleTabPinnedChange = useCallback(() => {
+        setPinLayoutVersion((version) => version + 1);
+    }, []);
+
     const activeTabIndex = tabIds.indexOf(activeTabId);
 
     function onEllipsisClick() {
         env.electron.showWorkspaceAppMenu(workspace.oid);
     }
 
-    const tabsWrapperWidth = tabIds.length * tabWidthRef.current;
+    const pinnedCount = tabRefs.current.filter((ref) => ref.current?.dataset.pinned === "true").length;
+    const tabsWrapperWidth = (tabIds.length - pinnedCount) * tabWidthRef.current + pinnedCount * TabPinnedWidth;
     const showAppMenuButton = env.isWindows() || (!env.isMacOS() && !showMenuBar);
 
     // Calculate window drag left width based on platform and state
@@ -647,6 +668,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                                     onDragStart={(event) => handleDragStart(event, tabId, tabRefs.current[index])}
                                     onClose={(event) => handleCloseTab(event, tabId)}
                                     onLoaded={() => handleTabLoaded(tabId)}
+                                    onPinnedChange={handleTabPinnedChange}
                                     isDragging={draggingTab === tabId}
                                     tabWidth={tabWidthRef.current}
                                     isNew={tabId === newTabId}

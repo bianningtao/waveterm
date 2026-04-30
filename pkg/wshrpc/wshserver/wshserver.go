@@ -1282,13 +1282,44 @@ func (ws *WshServer) WaveAIEnableTelemetryCommand(ctx context.Context) error {
 func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.CommandGetWaveAIChatData) (*uctypes.UIChat, error) {
 	aiChat := chatstore.DefaultChatStore.Get(data.ChatId)
 	if aiChat == nil {
-		return nil, nil
+		return chatstore.DefaultChatStore.GetUISnapshot(data.ChatId), nil
 	}
 	uiChat, err := aiusechat.ConvertAIChatToUIChat(aiChat)
 	if err != nil {
 		return nil, fmt.Errorf("error converting AI chat to UI chat: %w", err)
 	}
+	chatstore.DefaultChatStore.SaveUISnapshot(uiChat)
 	return uiChat, nil
+}
+
+func (ws *WshServer) ListWaveAIChatsCommand(ctx context.Context) ([]wshrpc.WaveAIChatHistoryEntry, error) {
+	entries := chatstore.DefaultChatStore.ListChats()
+	rtn := make([]wshrpc.WaveAIChatHistoryEntry, 0, len(entries))
+	for _, entry := range entries {
+		rtn = append(rtn, wshrpc.WaveAIChatHistoryEntry{
+			ChatId:       entry.ChatId,
+			Title:        entry.Title,
+			UpdatedTs:    entry.UpdatedTs,
+			APIType:      entry.APIType,
+			Model:        entry.Model,
+			APIVersion:   entry.APIVersion,
+			MessageCount: entry.MessageCount,
+		})
+	}
+	return rtn, nil
+}
+
+func (ws *WshServer) DeleteWaveAIChatCommand(ctx context.Context, data wshrpc.CommandGetWaveAIChatData) error {
+	chatstore.DefaultChatStore.Delete(data.ChatId)
+	return nil
+}
+
+func (ws *WshServer) RenameWaveAIChatCommand(ctx context.Context, data wshrpc.CommandRenameWaveAIChatData) error {
+	ok := chatstore.DefaultChatStore.SetChatTitle(data.ChatId, data.Title)
+	if !ok {
+		return fmt.Errorf("chat not found: %s", data.ChatId)
+	}
+	return nil
 }
 
 func (ws *WshServer) GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error) {

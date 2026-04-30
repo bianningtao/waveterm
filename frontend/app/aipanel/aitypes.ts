@@ -64,3 +64,13 @@ export type UseChatSendMessageType = (
           },
     options?: ChatRequestOptions
 ) => Promise<void>;
+
+export type WaveAIChatHistoryEntry = {
+    chatid: string;
+    title: string;
+    updatedts: number;
+    apitype: string;
+    model: string;
+    apiversion?: string;
+    messagecount: number;
+};

@@ -222,6 +222,12 @@ export class RpcApiType {
         return client.wshRpcCall("deletesubblock", data, opts);
     }
 
+    // command "deletewaveaichat" [call]
+    DeleteWaveAIChatCommand(client: WshClient, data: CommandGetWaveAIChatData, opts?: RpcOpts): Promise<void> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "deletewaveaichat", data, opts);
+        return client.wshRpcCall("deletewaveaichat", data, opts);
+    }
+
     // command "dismisswshfail" [call]
     DismissWshFailCommand(client: WshClient, data: string, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "dismisswshfail", data, opts);
@@ -618,6 +624,12 @@ export class RpcApiType {
         return client.wshRpcCall("listalleditableapps", null, opts);
     }
 
+    // command "listwaveaichats" [call]
+    ListWaveAIChatsCommand(client: WshClient, opts?: RpcOpts): Promise<WaveAIChatHistoryEntry[]> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "listwaveaichats", null, opts);
+        return client.wshRpcCall("listwaveaichats", null, opts);
+    }
+
     // command "macosversion" [call]
     MacOSVersionCommand(client: WshClient, opts?: RpcOpts): Promise<string> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "macosversion", null, opts);
@@ -802,6 +814,12 @@ export class RpcApiType {
     RenameAppFileCommand(client: WshClient, data: CommandRenameAppFileData, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "renameappfile", data, opts);
         return client.wshRpcCall("renameappfile", data, opts);
+    }
+
+    // command "renamewaveaichat" [call]
+    RenameWaveAIChatCommand(client: WshClient, data: CommandRenameWaveAIChatData, opts?: RpcOpts): Promise<void> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "renamewaveaichat", data, opts);
+        return client.wshRpcCall("renamewaveaichat", data, opts);
     }
 
     // command "resolveids" [call]

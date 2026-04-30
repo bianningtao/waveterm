@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { confirmClosePinnedTab, isPinnedTab } from "@/app/tab/pinnedtab";
 import { FocusManager } from "@/app/store/focusManager";
 import {
     atoms,
@@ -128,12 +129,27 @@ function getStaticTabBlockCount(): number {
     return tabData?.blockids?.length ?? 0;
 }
 
+function getStaticTabData(): Tab | null {
+    const tabId = globalStore.get(atoms.staticTabId);
+    if (tabId == null) {
+        return null;
+    }
+    const tabORef = WOS.makeORef("tab", tabId);
+    const tabAtom = WOS.getWaveObjectAtom<Tab>(tabORef);
+    return globalStore.get(tabAtom);
+}
+
 function simpleCloseStaticTab() {
     const workspaceId = globalStore.get(atoms.workspaceId);
     const tabId = globalStore.get(atoms.staticTabId);
     const confirmClose = globalStore.get(getSettingsKeyAtom("tab:confirmclose")) ?? false;
+    const tabData = getStaticTabData();
+    const isPinned = isPinnedTab(tabData);
+    if (isPinned && !confirmClosePinnedTab()) {
+        return;
+    }
     getApi()
-        .closeTab(workspaceId, tabId, confirmClose)
+        .closeTab(workspaceId, tabId, isPinned ? false : confirmClose)
         .then((didClose) => {
             if (didClose) {
                 deleteLayoutModelForTab(tabId);

@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BlockNodeModel } from "@/app/block/blocktypes";
+import { t } from "@/app/i18n";
 import { globalStore } from "@/app/store/jotaiStore";
 import type { TabModel } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { BackgroundsContent } from "@/app/view/waveconfig/backgroundscontent";
 import { SecretsContent } from "@/app/view/waveconfig/secretscontent";
+import { SettingsContent } from "@/app/view/waveconfig/settingscontent";
+import { WaveAIVisualContent } from "@/app/view/waveconfig/waveaivisual";
 import { WaveConfigView } from "@/app/view/waveconfig/waveconfig";
 import type { WaveConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
+import { WidgetsContent } from "@/app/view/waveconfig/widgetscontent";
 import { base64ToString, stringToBase64 } from "@/util/util";
 import { atom, type Atom, type PrimitiveAtom } from "jotai";
 import type * as MonacoTypes from "monaco-editor";
@@ -58,46 +63,49 @@ function validateWaveAiJson(parsed: any): ValidationResult {
 function makeConfigFiles(isWindows: boolean): ConfigFile[] {
     return [
         {
-            name: "General",
+            name: t("General"),
             path: "settings.json",
             language: "json",
             docsUrl: "https://docs.waveterm.dev/config",
             hasJsonView: true,
+            visualComponent: SettingsContent,
         },
         {
-            name: "Connections",
+            name: t("Connections"),
             path: "connections.json",
             language: "json",
             docsUrl: "https://docs.waveterm.dev/connections",
-            description: isWindows ? "SSH hosts and WSL distros" : "SSH hosts",
+            description: isWindows ? t("SSH hosts and WSL distros") : t("SSH hosts"),
             hasJsonView: true,
         },
         {
-            name: "Sidebar Widgets",
+            name: t("Sidebar Widgets"),
             path: "widgets.json",
             language: "json",
             docsUrl: "https://docs.waveterm.dev/customwidgets",
             hasJsonView: true,
+            visualComponent: WidgetsContent,
         },
         {
-            name: "Wave AI Modes",
+            name: t("Wave AI Modes"),
             path: "waveai.json",
             language: "json",
-            description: "Local models and BYOK",
+            description: t("Local models and BYOK"),
             docsUrl: "https://docs.waveterm.dev/waveai-modes",
             validator: validateWaveAiJson,
             hasJsonView: true,
-            // visualComponent: WaveAIVisualContent,
+            visualComponent: WaveAIVisualContent,
         },
         {
-            name: "Tab Backgrounds",
+            name: t("Tab Backgrounds"),
             path: "backgrounds.json",
             language: "json",
             docsUrl: "https://docs.waveterm.dev/tab-backgrounds",
             hasJsonView: true,
+            visualComponent: BackgroundsContent,
         },
         {
-            name: "Secrets",
+            name: t("Secrets"),
             path: "secrets",
             isSecrets: true,
             hasJsonView: false,
@@ -108,14 +116,14 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
 
 const deprecatedConfigFiles: ConfigFile[] = [
     {
-        name: "Presets",
+        name: t("Presets"),
         path: "presets.json",
         language: "json",
         deprecated: true,
         hasJsonView: true,
     },
     {
-        name: "AI Presets",
+        name: t("AI Presets"),
         path: "presets/ai.json",
         language: "json",
         deprecated: true,
@@ -129,7 +137,7 @@ export class WaveConfigViewModel implements ViewModel {
     blockId: string;
     viewType = "waveconfig";
     viewIcon = atom("gear");
-    viewName = atom("Wave Config");
+    viewName = atom(t("Wave Config"));
     viewComponent = WaveConfigView;
     noPadding = atom(true);
     nodeModel: BlockNodeModel;

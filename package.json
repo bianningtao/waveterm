@@ -89,6 +89,7 @@
         "css-tree": "^3.1.0",
         "dayjs": "^1.11.19",
         "debug": "^4.4.3",
+        "dompurify": "^3.4.1",
         "electron-updater": "^6.6",
         "env-paths": "^3.0.0",
         "fast-average-color": "^9.5.0",
@@ -96,6 +97,7 @@
         "html-to-image": "^1.11.13",
         "immer": "^10.1.1",
         "jotai": "2.9.3",
+        "mammoth": "^1.12.0",
         "mermaid": "^11.12.3",
         "monaco-editor": "^0.55.1",
         "monaco-yaml": "^5.4.0",
@@ -133,6 +135,7 @@
         "uuid": "^13.0.0",
         "winston": "^3.19.0",
         "ws": "^8.19.0",
+        "xlsx": "^0.18.5",
         "yaml": "^2.8.3"
     },
     "packageManager": "npm@10.9.2",

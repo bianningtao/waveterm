@@ -72,6 +72,35 @@
         }
     }
 
+    .pinned-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate3d(-50%, -50%, 0);
+        z-index: var(--zindex-tab-name);
+        color: var(--secondary-text-color);
+        font-size: 11px;
+        text-shadow: 0px 0px 4px rgb(from var(--main-bg-color) r g b / 0.25);
+    }
+
+    &.pinned {
+        .name {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .name.focused {
+            opacity: 1;
+            pointer-events: auto;
+            width: 120px;
+            background: var(--main-bg-color);
+        }
+
+        .tab-inner {
+            width: 32px;
+        }
+    }
+
     .wave-button {
         position: absolute;
         top: 50%;
@@ -117,6 +146,10 @@ body:not(.nohover) .tab.dragging {
             color: var(--main-text-color);
         }
     }
+
+    .pinned-icon {
+        display: none;
+    }
 }
 
 // When in nohover mode, always show the close button on the active tab. This prevents the close button of the active tab from flickering when nohover is toggled.
@@ -138,4 +171,3 @@ body.nohover .tab.active .close {
 .tab.new-tab {
     animation: expandWidthAndFadeIn 0.1s forwards;
 }
-
