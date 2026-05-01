@@ -12,11 +12,16 @@ on:
                 description: "Release tag to upload to when running manually"
                 required: false
                 type: string
+            source_run_id:
+                description: "Optional completed workflow run ID to upload artifacts from without rebuilding"
+                required: false
+                type: string
     push:
         tags:
             - "v*-zhcn.*"
 
 permissions:
+    actions: read
     contents: write
 
 env:
@@ -28,6 +33,7 @@ jobs:
     build:
         name: Build ${{ matrix.name }}
         runs-on: ${{ matrix.runner }}
+        if: github.event_name != 'workflow_dispatch' || inputs.source_run_id == ''
         strategy:
             fail-fast: false
             matrix:
@@ -107,7 +113,7 @@ jobs:
         name: Upload packages to Release
         runs-on: ubuntu-latest
         needs: build
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.upload_release)
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.upload_release && inputs.source_run_id == '')
         steps:
             - name: Download package artifacts
               uses: actions/download-artifact@v4
@@ -148,3 +154,49 @@ jobs:
               shell: bash
               env:
                   GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+
+    upload-existing-release:
+        name: Upload existing artifacts to Release
+        runs-on: ubuntu-latest
+        if: github.event_name == 'workflow_dispatch' && inputs.upload_release && inputs.source_run_id != ''
+        steps:
+            - name: Download package artifacts from source run
+              uses: actions/download-artifact@v4
+              with:
+                  github-token: ${{ github.token }}
+                  repository: ${{ github.repository }}
+                  run-id: ${{ inputs.source_run_id }}
+                  path: release-artifacts
+
+            - name: Resolve release tag
+              id: release_tag
+              run: |
+                  tag="${{ inputs.release_tag }}"
+                  if [[ -z "${tag}" ]]; then
+                      echo "release_tag is required when upload_release is enabled manually" >&2
+                      exit 1
+                  fi
+                  echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+              shell: bash
+
+            - name: Create or update GitHub Release
+              run: |
+                  set -euo pipefail
+                  tag="${{ steps.release_tag.outputs.tag }}"
+                  if ! gh release view "${tag}" >/dev/null 2>&1; then
+                      gh release create "${tag}" \
+                          --title "Wave 简体中文增强版 ${tag}" \
+                          --notes "自动构建的 macOS arm64 和 Windows x64 安装包。" \
+                          --target "${GITHUB_SHA}"
+                  fi
+                  mapfile -t files < <(find release-artifacts -type f | sort)
+                  if [[ ${#files[@]} -eq 0 ]]; then
+                      echo "No release artifacts found" >&2
+                      exit 1
+                  fi
+                  gh release upload "${tag}" "${files[@]}" --clobber
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
