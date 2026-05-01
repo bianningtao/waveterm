@@ -6,8 +6,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const ToolName = "claude-checkpoint";
-const StoreDirName = "claude-checkpoints";
+const ToolName = "restore-point";
+const StoreDirName = "restore-points";
 const CheckpointIdPattern = /^\d{8}T\d{6}-[a-f0-9]{8}$/;
 
 function printUsage(exitCode = 0) {
@@ -18,14 +18,14 @@ Usage:
   ${ToolName} prompt --prompt <text> [--json]
   ${ToolName} create [--message <text>] [--prompt <text>] [--json]
   ${ToolName} list [--json]
-  ${ToolName} diff <checkpoint-id> [--json]
-  ${ToolName} restore <checkpoint-id> [--yes] [--json]
+  ${ToolName} diff <restore-point-id> [--json]
+  ${ToolName} restore <restore-point-id> [--yes] [--json]
   ${ToolName} ensure-git [--yes] [--json]
 
 Notes:
-  - Checkpoints are stored under .git/${StoreDirName}.
+  - Restore points are stored under .git/${StoreDirName}.
   - restore is a dry run unless --yes is provided.
-  - restore creates a pre-restore checkpoint before changing files.
+  - restore creates a pre-restore restore point before changing files.
 `;
     writeText(usage.trim() + "\n");
     process.exit(exitCode);
@@ -517,7 +517,7 @@ function ensureGit(args) {
     const missing = additions.filter((line) => !lines.has(line));
     if (missing.length > 0) {
         const prefix = existingIgnore && !existingIgnore.endsWith("\n") ? "\n" : "";
-        fs.appendFileSync(ignorePath, `${prefix}\n# Claude checkpoint baseline\n${missing.join("\n")}\n`);
+        fs.appendFileSync(ignorePath, `${prefix}\n# Restore point baseline\n${missing.join("\n")}\n`);
     }
     return {
         command: "ensure-git",

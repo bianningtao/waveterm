@@ -25,6 +25,18 @@ Wave also supports durable SSH sessions that survive network interruptions and r
 
 ![WaveTerm Screenshot](./assets/wave-screenshot.webp)
 
+## 简体中文增强版主要功能
+
+这个 fork 保留 Wave 官方功能，并额外加入面向中文用户和本地开发流程的增强：
+
+- 默认简体中文界面，覆盖菜单、设置、AI 面板、预览、右键菜单和常用提示。
+- Wave Config 可视化配置，支持设置、连接、侧边栏小组件、标签背景和 AI 模型，并保留 Raw JSON。
+- AI 模型配置模板，新增 MiniMax、Kimi、阿里云百炼、智谱、DeepSeek、小米 MiMo 等国内模型入口。
+- Git 改动小组件，可查看文件变更、彩色 diff、预览源文件并提交改动。
+- 终端文件链接和预览增强，点击终端输出中的文件路径可在右侧预览。
+- 还原点工具和 agent skill，用于在开发会话中创建、查看、对比和恢复本地文件还原点。
+- 标签固定、背景取色器、新建 AI 对话入口、完成通知等日常体验增强。
+
 ## Key Features
 
 - Wave AI - Context-aware terminal assistant that reads your terminal output, analyzes widgets, and performs file operations
