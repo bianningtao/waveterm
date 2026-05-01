@@ -8,6 +8,7 @@ import type { TabModel } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { BackgroundsContent } from "@/app/view/waveconfig/backgroundscontent";
+import { ConnectionsContent } from "@/app/view/waveconfig/connectionscontent";
 import { SecretsContent } from "@/app/view/waveconfig/secretscontent";
 import { SettingsContent } from "@/app/view/waveconfig/settingscontent";
 import { WaveAIVisualContent } from "@/app/view/waveconfig/waveaivisual";
@@ -77,6 +78,7 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
             docsUrl: "https://docs.waveterm.dev/connections",
             description: isWindows ? t("SSH hosts and WSL distros") : t("SSH hosts"),
             hasJsonView: true,
+            visualComponent: ConnectionsContent,
         },
         {
             name: t("Sidebar Widgets"),

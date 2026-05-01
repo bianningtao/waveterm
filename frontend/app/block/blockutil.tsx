@@ -46,6 +46,9 @@ export function blockViewToIcon(view: string): string {
     if (view == "processviewer") {
         return "microchip";
     }
+    if (view == "gitchanges") {
+        return "code-branch";
+    }
     return "square";
 }
 
@@ -73,6 +76,9 @@ export function blockViewToName(view: string): string {
     }
     if (view == "processviewer") {
         return t("Processes");
+    }
+    if (view == "gitchanges") {
+        return t("Git Changes");
     }
     return view;
 }
@@ -216,7 +222,7 @@ export const OptMagnifyButton = React.memo(
         const magnifyDecl: IconButtonDecl = {
             elemtype: "iconbutton",
             icon: <MagnifyIcon enabled={magnified} />,
-            title: magnified ? "Minimize" : "Magnify",
+            title: magnified ? t("Un-Magnify Block") : t("Magnify Block"),
             click: toggleMagnify,
             disabled,
         };

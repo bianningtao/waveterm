@@ -5,7 +5,9 @@ import { Tooltip } from "@/app/element/tooltip";
 import { setI18nLocaleFromConfig, supportedLocales, t, type Locale } from "@/app/i18n";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { makeContextAwareWidgetBlockDef } from "@/app/workspace/widgetcontext";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
+import { getFocusedBlockId, globalStore, WOS } from "@/store/global";
 import { modalsModel } from "@/store/modalmodel";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
 import {
@@ -58,7 +60,11 @@ type WidgetPropsType = {
 };
 
 async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
-    const blockDef = widget.blockdef;
+    const focusedBlockId = getFocusedBlockId();
+    const focusedBlock = focusedBlockId
+        ? globalStore.get(WOS.getWaveObjectAtom<Block>(WOS.makeORef("block", focusedBlockId)))
+        : null;
+    const blockDef = makeContextAwareWidgetBlockDef(widget.blockdef, focusedBlock?.meta);
     env.createBlock(blockDef, widget.magnified);
 }
 

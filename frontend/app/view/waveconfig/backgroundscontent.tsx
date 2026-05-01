@@ -3,6 +3,7 @@
 
 import { t } from "@/app/i18n";
 import { globalStore } from "@/app/store/jotaiStore";
+import { WaveConfigColorInputClass, WaveConfigFieldClass } from "@/app/view/waveconfig/formstyles";
 import type { WaveConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
 import { computeBgStyleFromMeta } from "@/util/waveutil";
 import { useAtomValue } from "jotai";
@@ -201,7 +202,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                 <input
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
-                                    className="rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent"
+                                    className={WaveConfigFieldClass}
                                 />
                             </label>
 
@@ -213,7 +214,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                             value={imagePath}
                                             onChange={(e) => setImagePath(e.target.value)}
                                             placeholder="/Users/me/Pictures/background.jpg"
-                                            className="min-w-0 flex-1 rounded border border-border bg-secondary px-3 py-2 font-mono text-primary outline-none focus:border-accent"
+                                            className={`${WaveConfigFieldClass} min-w-0 flex-1 font-mono`}
                                         />
                                         <button
                                             type="button"
@@ -239,12 +240,12 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                             type="color"
                                             value={isValidHexColor(colorValue) ? colorValue : "#2563eb"}
                                             onChange={(e) => setColorValue(e.target.value)}
-                                            className="h-10 w-12 cursor-pointer rounded border border-border bg-secondary"
+                                            className={`${WaveConfigColorInputClass} h-10 w-12 cursor-pointer`}
                                         />
                                         <input
                                             value={colorValue}
                                             onChange={(e) => setColorValue(e.target.value)}
-                                            className="w-32 rounded border border-border bg-secondary px-3 py-2 font-mono text-primary outline-none focus:border-accent"
+                                            className={`${WaveConfigFieldClass} w-32 font-mono`}
                                         />
                                     </div>
                                     <div className="flex flex-wrap gap-2">
@@ -282,7 +283,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                     <input
                                         value={opacity}
                                         onChange={(e) => setOpacity(e.target.value)}
-                                        className="w-20 rounded border border-border bg-secondary px-2 py-1 text-primary outline-none focus:border-accent"
+                                        className={`${WaveConfigFieldClass} w-20 px-2 py-1`}
                                     />
                                 </div>
                             </label>

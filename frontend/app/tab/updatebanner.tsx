@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/element/tooltip";
+import { t } from "@/app/i18n";
 import { WaveEnv, WaveEnvSubset, useWaveEnv } from "@/app/waveenv/waveenv";
 import { useAtomValue } from "jotai";
 import { memo, useCallback } from "react";
@@ -42,7 +43,7 @@ const UpdateStatusBannerComponent = () => {
     }
 
     const isReady = appUpdateStatus === "ready";
-    const tooltipContent = isReady ? "Click to Install Update" : updateStatusMessage;
+    const tooltipContent = isReady ? t("Click to Install Update") : updateStatusMessage;
 
     return (
         <Tooltip

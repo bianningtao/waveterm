@@ -3,6 +3,7 @@
 
 import { BlockNodeModel } from "@/app/block/blocktypes";
 import { Search, useSearch } from "@/app/element/search";
+import { t } from "@/app/i18n";
 import { globalStore } from "@/app/store/jotaiStore";
 import { getSimpleControlShiftAtom } from "@/app/store/keymodel";
 import type { TabModel } from "@/app/store/tab-model";
@@ -186,7 +187,7 @@ export class WebViewModel implements ViewModel {
             if (userAgentType === "mobile:iphone" || userAgentType === "mobile:android") {
                 const mobileIcon = userAgentType === "mobile:iphone" ? "mobile-screen" : "mobile-screen-button";
                 const mobileTitle =
-                    userAgentType === "mobile:iphone" ? "Mobile User Agent: iPhone" : "Mobile User Agent: Android";
+                    userAgentType === "mobile:iphone" ? t("Mobile User Agent: iPhone") : t("Mobile User Agent: Android");
                 buttons.push({
                     elemtype: "iconbutton",
                     icon: mobileIcon,
@@ -198,7 +199,7 @@ export class WebViewModel implements ViewModel {
             buttons.push({
                 elemtype: "iconbutton",
                 icon: "arrow-up-right-from-square",
-                title: "Open in External Browser",
+                title: t("Open in External Browser"),
                 click: () => {
                     console.log("open external", url);
                     if (url != null && url != "") {

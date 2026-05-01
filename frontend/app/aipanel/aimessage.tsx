@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WaveStreamdown } from "@/app/element/streamdown";
+import { t } from "@/app/i18n";
 import { cn } from "@/util/util";
 import { memo, useEffect, useRef } from "react";
 import { getFileIcon } from "./ai-utils";
@@ -90,9 +91,9 @@ const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
                             </div>
                             <div
                                 className="text-[10px] text-gray-200 truncate w-full max-w-16"
-                                title={file.data?.filename || "File"}
+                                title={file.data?.filename || t("File")}
                             >
-                                {file.data?.filename || "File"}
+                                {file.data?.filename || t("File")}
                             </div>
                         </div>
                     </div>

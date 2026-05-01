@@ -4,6 +4,7 @@
 import { Button } from "@/app/element/button";
 import { CopyButton } from "@/app/element/copybutton";
 import { useDimensionsWithCallbackRef } from "@/app/hook/useDimensions";
+import { t } from "@/app/i18n";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { NodeModel } from "@/layout/index";
@@ -87,19 +88,19 @@ const StalledOverlay = React.memo(
                 <div className="flex items-center gap-3 w-full pt-2.5 pb-2.5 pr-2 pl-3">
                     <i
                         className="fa-solid fa-triangle-exclamation text-warning text-base shrink-0"
-                        title="Connection Stalled"
+                        title={t("Connection Stalled")}
                     ></i>
                     <div className="text-[11px] font-semibold leading-4 tracking-[0.11px] text-white min-w-0 flex-1 break-words @max-xxs:hidden">
-                        Connection to "{connName}" is stalled
-                        {elapsedTime && ` (no activity for ${elapsedTime})`}
+                        {t("Connection to {connName} is stalled", { connName })}
+                        {elapsedTime && `（${t("no activity for {elapsedTime}", { elapsedTime })}）`}
                     </div>
                     <div className="flex-1 hidden @max-xxs:block"></div>
                     <Button
                         className="outlined grey text-[11px] py-[3px] px-[7px] @max-w350:text-[12px] @max-w350:py-[5px] @max-w350:px-[6px]"
                         onClick={handleDisconnect}
-                        title="Disconnect"
+                        title={t("Disconnect")}
                     >
-                        <span className="@max-w350:hidden!">Disconnect</span>
+                        <span className="@max-w350:hidden!">{t("Disconnect")}</span>
                         <i className="fa-solid fa-link-slash hidden! @max-w350:inline!"></i>
                     </Button>
                 </div>
@@ -239,7 +240,7 @@ export const ConnStatusOverlay = React.memo(
                                     className="connstatus-error"
                                     options={{ scrollbars: { autoHide: "leave" } }}
                                 >
-                                    <CopyButton className="copy-button" onClick={handleCopy} title="Copy" />
+                                    <CopyButton className="copy-button" onClick={handleCopy} title={t("Copy")} />
                                     {showError ? <div>error: {connStatus.error}</div> : null}
                                     {showWshError ? <div>unable to use wsh: {connStatus.wsherror}</div> : null}
                                 </OverlayScrollbarsComponent>

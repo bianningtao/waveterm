@@ -7,8 +7,10 @@ import { getFileSubject } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import {
+    createBlockSplitVertically,
     fetchWaveFile,
     getApi,
+    getBlockMetaKeyAtom,
     getOverrideConfigAtom,
     getSettingsKeyAtom,
     globalStore,
@@ -44,6 +46,7 @@ import {
     quoteForPosixShell,
     trimTerminalSelection,
 } from "./termutil";
+import { findTerminalFileLinks } from "./term-file-links";
 
 const dlog = debug("wave:termwrap");
 
@@ -150,6 +153,7 @@ export class TermWrap {
         this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);
         this.terminal.loadAddon(this.serializeAddon);
+        this.toDispose.push(this.terminal.registerLinkProvider(this.makeFileLinkProvider()));
         this.terminal.loadAddon(
             new WebLinksAddon(
                 (e, uri) => {
@@ -322,6 +326,66 @@ export class TermWrap {
                 this.connectElem.removeEventListener("paste", pasteHandler, true);
             },
         });
+    }
+
+    makeFileLinkProvider(): TermTypes.ILinkProvider {
+        return {
+            provideLinks: (bufferLineNumber: number, callback: (links: TermTypes.ILink[] | undefined) => void) => {
+                const line = this.terminal.buffer.active.getLine(bufferLineNumber - 1);
+                if (line == null) {
+                    callback(undefined);
+                    return;
+                }
+                const cwd = globalStore.get(getBlockMetaKeyAtom(this.blockId, "cmd:cwd"));
+                const matches = findTerminalFileLinks(line.translateToString(true), cwd);
+                if (matches.length === 0) {
+                    callback(undefined);
+                    return;
+                }
+                const links: TermTypes.ILink[] = matches.map((match) => ({
+                    text: match.text,
+                    range: {
+                        start: { x: match.startIndex + 1, y: bufferLineNumber },
+                        end: { x: match.endIndex, y: bufferLineNumber },
+                    },
+                    decorations: {
+                        pointerCursor: true,
+                        underline: true,
+                    },
+                    activate: (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fireAndForget(() => this.openFilePreview(match.path));
+                    },
+                    hover: (e) => {
+                        this.hoveredLinkUri = `wave-file-preview:${match.path}`;
+                        this.onLinkHover?.(this.hoveredLinkUri, e.clientX, e.clientY);
+                    },
+                    leave: () => {
+                        this.hoveredLinkUri = null;
+                        this.onLinkHover?.(null, 0, 0);
+                    },
+                }));
+                callback(links);
+            },
+        };
+    }
+
+    async openFilePreview(filePath: string): Promise<void> {
+        if (!filePath) {
+            return;
+        }
+        const connection = globalStore.get(getBlockMetaKeyAtom(this.blockId, "connection"));
+        const blockDef: BlockDef = {
+            meta: {
+                view: "preview",
+                file: filePath,
+            },
+        };
+        if (connection) {
+            blockDef.meta.connection = connection;
+        }
+        await createBlockSplitVertically(blockDef, this.blockId, "after");
     }
 
     getZoneId(): string {

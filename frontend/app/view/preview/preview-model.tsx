@@ -288,7 +288,7 @@ export class PreviewModel implements ViewModel {
                 } else if (fileInfo.data.readonly) {
                     viewTextChildren.push({
                         elemtype: "textbutton",
-                        text: "Read Only",
+                        text: t("Read Only"),
                         className: clsx(`yellow rounded-[4px] !py-[2px] !px-[10px] text-[11px] font-[500]`),
                         onClick: () => {},
                     });
@@ -303,7 +303,7 @@ export class PreviewModel implements ViewModel {
                 if (get(this.canPreview)) {
                     viewTextChildren.push({
                         elemtype: "textbutton",
-                        text: "Preview",
+                        text: t("Preview"),
                         className: "grey rounded-[4px] !py-[2px] !px-[10px] text-[11px] font-[500]",
                         onClick: () => fireAndForget(() => this.setEditMode(false)),
                     });
@@ -311,7 +311,7 @@ export class PreviewModel implements ViewModel {
             } else if (get(this.canPreview)) {
                 viewTextChildren.push({
                     elemtype: "textbutton",
-                    text: "Edit",
+                    text: t("Edit"),
                     className: "grey rounded-[4px] !py-[2px] !px-[10px] text-[11px] font-[500]",
                     onClick: () => fireAndForget(() => this.setEditMode(true)),
                 });
@@ -336,6 +336,7 @@ export class PreviewModel implements ViewModel {
             return {
                 elemtype: "iconbutton",
                 icon: "chevron-left",
+                title: t("Go to Parent Directory"),
                 click: this.goParentDirectory.bind(this),
             };
         });
@@ -353,7 +354,7 @@ export class PreviewModel implements ViewModel {
                     {
                         elemtype: "iconbutton",
                         icon: showHiddenFiles ? "eye" : "eye-slash",
-                        title: showHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files",
+                        title: showHiddenFiles ? t("Hide Hidden Files") : t("Show Hidden Files"),
                         click: () => {
                             globalStore.set(this.showHiddenFiles, (prev) => !prev);
                         },
@@ -361,6 +362,7 @@ export class PreviewModel implements ViewModel {
                     {
                         elemtype: "iconbutton",
                         icon: "arrows-rotate",
+                        title: t("Refresh"),
                         click: () => this.refreshCallback?.(),
                     },
                 ] as IconButtonDecl[];
@@ -369,13 +371,13 @@ export class PreviewModel implements ViewModel {
                     {
                         elemtype: "iconbutton",
                         icon: "book",
-                        title: "Table of Contents",
+                        title: t("Table of Contents"),
                         click: () => this.markdownShowTocToggle(),
                     },
                     {
                         elemtype: "iconbutton",
                         icon: "arrows-rotate",
-                        title: "Refresh",
+                        title: t("Refresh"),
                         click: () => this.refreshCallback?.(),
                     },
                 ] as IconButtonDecl[];
@@ -385,7 +387,7 @@ export class PreviewModel implements ViewModel {
                     {
                         elemtype: "iconbutton",
                         icon: "arrows-rotate",
-                        title: "Refresh",
+                        title: t("Refresh"),
                         click: () => this.refreshCallback?.(),
                     },
                 ] as IconButtonDecl[];

@@ -19,6 +19,8 @@
                     "preview",
                     "web",
                     "sysinfo",
+                    "processviewer",
+                    "gitchanges",
                     "launcher"
                   ]
                 },

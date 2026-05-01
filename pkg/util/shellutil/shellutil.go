@@ -225,6 +225,11 @@ func WaveshellLocalEnvVars(termType string) map[string]string {
 	if os.Getenv("COLORTERM") == "" {
 		rtn["COLORTERM"] = "truecolor"
 	}
+	// Wave terminals should render color even if the app was launched from an
+	// automation environment that exported NO_COLOR.
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		rtn["NO_COLOR"] = ""
+	}
 	rtn["WAVETERM"], _ = os.Executable()
 	rtn["WAVETERM_VERSION"] = wavebase.WaveVersion
 	rtn["WAVETERM_WSHBINDIR"] = filepath.Join(wavebase.GetWaveDataDir(), WaveHomeBinDir)
@@ -251,6 +256,9 @@ func UpdateCmdEnv(cmd *exec.Cmd, envVars map[string]string) {
 	}
 	for envKey, envVal := range envVars {
 		if found[envKey] {
+			continue
+		}
+		if envVal == "" {
 			continue
 		}
 		newEnv = append(newEnv, envKey+"="+envVal)
