@@ -34,19 +34,15 @@ jobs:
                 include:
                     - name: macOS arm64 DMG
                       runner: macos-latest
-                      task_command: task package -- --mac dmg --arm64
                       artifact_name: macos-arm64-dmg
                       artifact_path: make/*.dmg
-                      shell: bash
                     - name: Windows x64 installer
                       runner: windows-latest
-                      task_command: task package
                       artifact_name: windows-x64
                       artifact_path: |
                           make/*.exe
                           make/*.msi
                           make/*.zip
-                      shell: powershell
 
         steps:
             - name: Checkout
@@ -84,9 +80,18 @@ jobs:
               if: runner.os == 'Windows'
               uses: mlugg/setup-zig@v2
 
-            - name: Build package
-              run: ${{ matrix.task_command }}
-              shell: ${{ matrix.shell }}
+            - name: Build macOS package
+              if: runner.os == 'macOS'
+              run: task package -- --mac dmg --arm64
+              shell: bash
+              env:
+                  USE_SYSTEM_FPM: true
+                  CSC_IDENTITY_AUTO_DISCOVERY: false
+
+            - name: Build Windows package
+              if: runner.os == 'Windows'
+              run: task package
+              shell: powershell
               env:
                   USE_SYSTEM_FPM: true
                   CSC_IDENTITY_AUTO_DISCOVERY: false
