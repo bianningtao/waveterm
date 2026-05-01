@@ -31,6 +31,7 @@ import (
 	"github.com/wavetermdev/waveterm/pkg/filebackup"
 	"github.com/wavetermdev/waveterm/pkg/filestore"
 	"github.com/wavetermdev/waveterm/pkg/genconn"
+	"github.com/wavetermdev/waveterm/pkg/gitstatus"
 	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
 	"github.com/wavetermdev/waveterm/pkg/panichandler"
 	"github.com/wavetermdev/waveterm/pkg/remote"
@@ -173,6 +174,47 @@ func (ws *WshServer) UpdateWorkspaceTabIdsCommand(ctx context.Context, workspace
 	}
 	wcore.SendWaveObjUpdate(oref)
 	return nil
+}
+
+func (ws *WshServer) GitStatusCommand(ctx context.Context, data wshrpc.CommandGitStatusData) (*wshrpc.CommandGitStatusRtnData, error) {
+	result, err := gitstatus.Status(ctx, data.Cwd)
+	if err != nil {
+		if errors.Is(err, gitstatus.ErrNotGitRepository) {
+			return &wshrpc.CommandGitStatusRtnData{NotAGit: true, ErrorMsg: "current directory is not inside a Git repository"}, nil
+		}
+		return nil, err
+	}
+	files := make([]wshrpc.GitFileStatus, 0, len(result.Files))
+	for _, file := range result.Files {
+		files = append(files, wshrpc.GitFileStatus{
+			Path:           file.Path,
+			OriginalPath:   file.OriginalPath,
+			IndexStatus:    file.IndexStatus,
+			WorkTreeStatus: file.WorkTreeStatus,
+			Kind:           file.Kind,
+		})
+	}
+	return &wshrpc.CommandGitStatusRtnData{
+		Root:   result.Root,
+		Branch: result.Branch,
+		Files:  files,
+	}, nil
+}
+
+func (ws *WshServer) GitDiffCommand(ctx context.Context, data wshrpc.CommandGitDiffData) (*wshrpc.CommandGitDiffRtnData, error) {
+	diff, err := gitstatus.Diff(ctx, data.Root, data.Path, !data.Untracked)
+	if err != nil {
+		return nil, err
+	}
+	return &wshrpc.CommandGitDiffRtnData{Path: data.Path, Diff: diff}, nil
+}
+
+func (ws *WshServer) GitCommitCommand(ctx context.Context, data wshrpc.CommandGitCommitData) (*wshrpc.CommandGitCommitRtnData, error) {
+	output, err := gitstatus.CommitAll(ctx, data.Root, data.Message)
+	if err != nil {
+		return nil, err
+	}
+	return &wshrpc.CommandGitCommitRtnData{Output: output}, nil
 }
 
 func (ws *WshServer) SetMetaCommand(ctx context.Context, data wshrpc.CommandSetMetaData) error {

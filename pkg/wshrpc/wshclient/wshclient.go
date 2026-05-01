@@ -514,6 +514,24 @@ func GetWaveAIRateLimitCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*uctype
 	return resp, err
 }
 
+// command "gitcommit", wshserver.GitCommitCommand
+func GitCommitCommand(w *wshutil.WshRpc, data wshrpc.CommandGitCommitData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitCommitRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitCommitRtnData](w, "gitcommit", data, opts)
+	return resp, err
+}
+
+// command "gitdiff", wshserver.GitDiffCommand
+func GitDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandGitDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitDiffRtnData](w, "gitdiff", data, opts)
+	return resp, err
+}
+
+// command "gitstatus", wshserver.GitStatusCommand
+func GitStatusCommand(w *wshutil.WshRpc, data wshrpc.CommandGitStatusData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitStatusRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitStatusRtnData](w, "gitstatus", data, opts)
+	return resp, err
+}
+
 // command "jobcmdexited", wshserver.JobCmdExitedCommand
 func JobCmdExitedCommand(w *wshutil.WshRpc, data wshrpc.CommandJobCmdExitedData, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "jobcmdexited", data, opts)

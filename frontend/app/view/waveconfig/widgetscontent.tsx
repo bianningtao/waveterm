@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { t } from "@/app/i18n";
+import { WaveConfigColorInputClass, WaveConfigFieldClass, WaveConfigTextAreaClass } from "@/app/view/waveconfig/formstyles";
 import type { WaveConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
 import { useAtom } from "jotai";
 import { memo, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -29,7 +30,7 @@ type WidgetConfig = {
 };
 type WidgetsConfig = Record<string, WidgetConfig | null>;
 
-const ViewOptions = ["term", "preview", "web", "sysinfo", "processviewer", "launcher"];
+const ViewOptions = ["term", "preview", "web", "sysinfo", "processviewer", "gitchanges", "launcher"];
 const ControllerOptions = ["shell", "cmd"];
 const WidgetKeyPattern = /^[a-zA-Z0-9_@.-]+$/;
 
@@ -94,14 +95,14 @@ function makeTemplate(config: WidgetsConfig, view: string): [string, WidgetConfi
             },
         ];
     }
-    if (view === "sysinfo" || view === "processviewer") {
+    if (view === "sysinfo" || view === "processviewer" || view === "gitchanges") {
         return [
             key,
             {
-                icon: view === "sysinfo" ? "chart-line" : "list-check",
-                label: view === "sysinfo" ? "sysinfo" : "processes",
+                icon: view === "sysinfo" ? "chart-line" : view === "processviewer" ? "list-check" : "code-branch",
+                label: view === "sysinfo" ? "sysinfo" : view === "processviewer" ? "processes" : "changes",
                 color: "#d1d5db",
-                blockdef: { meta: { view } },
+                blockdef: { meta: view === "gitchanges" ? { view, "cmd:cwd": "~" } : { view } },
             },
         ];
     }
@@ -180,9 +181,7 @@ function TextInput({
             onChange={(e) => onChange(e.target.value)}
             onBlur={onBlur}
             placeholder={placeholder}
-            className={`rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent ${
-                mono ? "font-mono" : ""
-            }`}
+            className={`${WaveConfigFieldClass} ${mono ? "font-mono" : ""}`}
         />
     );
 }
@@ -335,7 +334,7 @@ export const WidgetsContent = memo(({ model }: { model: WaveConfigViewModel }) =
                 <div className="border-b border-border p-3">
                     <div className="text-sm font-semibold">{t("Sidebar Widgets")}</div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                        {["term", "preview", "web", "sysinfo", "processviewer"].map((view) => (
+                        {["term", "preview", "web", "sysinfo", "processviewer", "gitchanges"].map((view) => (
                             <button key={view} type="button" onClick={() => addWidget(view)} className="rounded border border-border px-2 py-1 text-xs hover:bg-hover">
                                 <i className="fa fa-plus mr-1" />
                                 {view}
@@ -419,7 +418,7 @@ export const WidgetsContent = memo(({ model }: { model: WaveConfigViewModel }) =
                                         type="color"
                                         value={normalizedWidget.color?.startsWith("#") ? normalizedWidget.color : "#d1d5db"}
                                         onChange={(e) => updateWidget({ color: e.target.value })}
-                                        className="h-10 w-12 rounded border border-border bg-secondary"
+                                        className={`${WaveConfigColorInputClass} h-10 w-12`}
                                     />
                                     <TextInput value={normalizedWidget.color ?? ""} onChange={(value) => updateWidget({ color: value })} />
                                 </div>
@@ -462,7 +461,7 @@ export const WidgetsContent = memo(({ model }: { model: WaveConfigViewModel }) =
                                 <select
                                     value={meta.view ?? ""}
                                     onChange={(e) => updateMeta({ view: e.target.value || undefined })}
-                                    className="rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent"
+                                    className={WaveConfigFieldClass}
                                 >
                                     <option value="">{t("No View")}</option>
                                     {ViewOptions.map((view) => (
@@ -476,7 +475,7 @@ export const WidgetsContent = memo(({ model }: { model: WaveConfigViewModel }) =
                                 <select
                                     value={meta.controller ?? ""}
                                     onChange={(e) => updateMeta({ controller: e.target.value || undefined })}
-                                    className="rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent"
+                                    className={WaveConfigFieldClass}
                                 >
                                     <option value="">{t("Use view default")}</option>
                                     {ControllerOptions.map((controller) => (
@@ -518,7 +517,7 @@ export const WidgetsContent = memo(({ model }: { model: WaveConfigViewModel }) =
                                 value={metaDraft}
                                 onChange={(e) => setMetaDraft(e.target.value)}
                                 onBlur={applyMetaDraft}
-                                className="min-h-40 rounded border border-border bg-secondary px-3 py-2 font-mono text-sm text-primary outline-none focus:border-accent"
+                                className={`${WaveConfigTextAreaClass} min-h-40 font-mono text-sm`}
                             />
                             {metaError ? <div className="text-sm text-error">{metaError}</div> : <div className="text-xs text-muted">{t("Advanced fields are preserved and can be edited here.")}</div>}
                         </section>

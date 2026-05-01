@@ -97,6 +97,9 @@ type WshRpcInterface interface {
 	UpdateTabNameCommand(ctx context.Context, tabId string, newName string) error
 	UpdateWorkspaceTabIdsCommand(ctx context.Context, workspaceId string, tabIds []string) error
 	GetAllBadgesCommand(ctx context.Context) ([]baseds.BadgeEvent, error)
+	GitStatusCommand(ctx context.Context, data CommandGitStatusData) (*CommandGitStatusRtnData, error)
+	GitDiffCommand(ctx context.Context, data CommandGitDiffData) (*CommandGitDiffRtnData, error)
+	GitCommitCommand(ctx context.Context, data CommandGitCommitData) (*CommandGitCommitRtnData, error)
 
 	// connection functions
 	ConnStatusCommand(ctx context.Context) ([]ConnStatus, error)
@@ -357,6 +360,46 @@ type CpuDataType struct {
 type CommandFileRestoreBackupData struct {
 	BackupFilePath    string `json:"backupfilepath"`
 	RestoreToFileName string `json:"restoretofilename"`
+}
+
+type CommandGitStatusData struct {
+	Cwd string `json:"cwd"`
+}
+
+type GitFileStatus struct {
+	Path           string `json:"path"`
+	OriginalPath   string `json:"originalpath,omitempty"`
+	IndexStatus    string `json:"indexstatus"`
+	WorkTreeStatus string `json:"worktreestatus"`
+	Kind           string `json:"kind"`
+}
+
+type CommandGitStatusRtnData struct {
+	Root     string          `json:"root"`
+	Branch   string          `json:"branch"`
+	Files    []GitFileStatus `json:"files"`
+	NotAGit  bool            `json:"notagit,omitempty"`
+	ErrorMsg string          `json:"errormsg,omitempty"`
+}
+
+type CommandGitDiffData struct {
+	Root      string `json:"root"`
+	Path      string `json:"path"`
+	Untracked bool   `json:"untracked,omitempty"`
+}
+
+type CommandGitDiffRtnData struct {
+	Path string `json:"path"`
+	Diff string `json:"diff"`
+}
+
+type CommandGitCommitData struct {
+	Root    string `json:"root"`
+	Message string `json:"message"`
+}
+
+type CommandGitCommitRtnData struct {
+	Output string `json:"output"`
 }
 
 type CommandGetTempDirData struct {

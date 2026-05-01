@@ -516,6 +516,24 @@ export class RpcApiType {
         return client.wshRpcCall("getwaveairatelimit", null, opts);
     }
 
+    // command "gitcommit" [call]
+    GitCommitCommand(client: WshClient, data: CommandGitCommitData, opts?: RpcOpts): Promise<CommandGitCommitRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "gitcommit", data, opts);
+        return client.wshRpcCall("gitcommit", data, opts);
+    }
+
+    // command "gitdiff" [call]
+    GitDiffCommand(client: WshClient, data: CommandGitDiffData, opts?: RpcOpts): Promise<CommandGitDiffRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "gitdiff", data, opts);
+        return client.wshRpcCall("gitdiff", data, opts);
+    }
+
+    // command "gitstatus" [call]
+    GitStatusCommand(client: WshClient, data: CommandGitStatusData, opts?: RpcOpts): Promise<CommandGitStatusRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "gitstatus", data, opts);
+        return client.wshRpcCall("gitstatus", data, opts);
+    }
+
     // command "jobcmdexited" [call]
     JobCmdExitedCommand(client: WshClient, data: CommandJobCmdExitedData, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "jobcmdexited", data, opts);

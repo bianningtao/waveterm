@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BlockModel } from "@/app/block/block-model";
+import { t } from "@/app/i18n";
 import { Modal } from "@/app/modals/modal";
 import { recordTEvent } from "@/app/store/global";
 import { cn, fireAndForget } from "@/util/util";
@@ -286,9 +287,9 @@ const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
                                 model.openRestoreBackupModal(toolData.toolcallid);
                             }}
                             className="flex-shrink-0 px-1.5 py-0.5 border border-zinc-600 hover:border-zinc-500 hover:bg-zinc-700 rounded cursor-pointer transition-colors flex items-center gap-1 text-zinc-400"
-                            title="Restore backup file"
+                            title={t("Restore backup file")}
                         >
-                            <span className="text-xs">Revert File</span>
+                            <span className="text-xs">{t("Revert File")}</span>
                             <i className="fa fa-clock-rotate-left text-xs"></i>
                         </button>
                     )}
@@ -296,9 +297,9 @@ const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
                     <button
                         onClick={handleOpenDiff}
                         className="flex-shrink-0 px-1.5 py-0.5 border border-zinc-600 hover:border-zinc-500 hover:bg-zinc-700 rounded cursor-pointer transition-colors flex items-center gap-1 text-zinc-400"
-                        title="Open in diff viewer"
+                        title={t("Open in diff viewer")}
                     >
-                        <span className="text-xs">Show Diff</span>
+                        <span className="text-xs">{t("Show Diff")}</span>
                         <i className="fa fa-arrow-up-right-from-square text-xs"></i>
                     </button>
                 )}

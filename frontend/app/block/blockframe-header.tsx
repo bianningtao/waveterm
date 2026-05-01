@@ -288,8 +288,8 @@ const BlockFrame_Header = ({
                     className="pointer-events-none flex items-center px-1"
                     style={{ color: badge.color || "#fbbf24" }}
                     data-badge-status={badgeStatus ?? undefined}
-                    title={badgeStatusLabel ?? "Block notification"}
-                    aria-label={badgeStatusLabel ?? "Block notification"}
+                    title={badgeStatusLabel ?? t("Block notification")}
+                    aria-label={badgeStatusLabel ?? t("Block notification")}
                 >
                     <i className={makeIconClass(badge.icon, true, { defaultIcon: "circle-small" })} />
                 </div>

@@ -2,14 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { t } from "@/app/i18n";
+import { WaveConfigFieldClass } from "@/app/view/waveconfig/formstyles";
 import type { WaveConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
 import { useAtom } from "jotai";
 import { memo, useEffect, useMemo, useState, type ReactNode } from "react";
 
 type Capability = "tools" | "images" | "pdfs";
 type Provider = "wave" | "google" | "groq" | "openrouter" | "nanogpt" | "openai" | "azure" | "azure-legacy" | "custom";
-type ApiType = "google-gemini" | "openai-responses" | "openai-chat";
+type ApiType = "google-gemini" | "openai-responses" | "openai-chat" | "anthropic-messages";
 type Level = "low" | "medium" | "high";
+type TemplateId =
+    | "openai"
+    | "google"
+    | "openrouter"
+    | "azure"
+    | "custom"
+    | "minimax-cn"
+    | "minimax-intl"
+    | "minimax-token-plan-cn"
+    | "minimax-token-plan-intl"
+    | "kimi-cn"
+    | "kimi-intl"
+    | "bailian-cn"
+    | "bailian-us"
+    | "bailian-sg"
+    | "zhipu"
+    | "deepseek-openai"
+    | "deepseek-anthropic"
+    | "xiaomi-mimo";
 
 type WaveAIModeConfig = {
     "display:name": string;
@@ -47,10 +67,66 @@ const ProviderOptions: Provider[] = [
     "azure-legacy",
     "custom",
 ];
-const ApiTypeOptions: ApiType[] = ["openai-responses", "openai-chat", "google-gemini"];
+const ApiTypeOptions: ApiType[] = ["openai-responses", "openai-chat", "anthropic-messages", "google-gemini"];
 const LevelOptions: Level[] = ["low", "medium", "high"];
 const CapabilityOptions: Capability[] = ["tools", "images", "pdfs"];
 const ModeKeyPattern = /^[a-zA-Z0-9_@.-]+$/;
+const ModelSuggestions = [
+    "MiniMax-M2.7",
+    "kimi-k2.5",
+    "qwen-plus",
+    "glm-5.1",
+    "deepseek-v4-pro",
+    "mimo-v2-pro",
+    "mimo-v2-flash",
+    "mimo-v2.5-pro",
+    "gpt-4.1",
+    "gemini-2.5-pro",
+    "llama3.1",
+];
+
+type TemplateButton = {
+    id: TemplateId;
+    label: string;
+    description?: string;
+};
+
+const TemplateGroups: Array<{ title: string; description: string; templates: TemplateButton[] }> = [
+    {
+        title: "International Providers",
+        description: "OpenAI, Gemini, OpenRouter, and Azure templates.",
+        templates: [
+            { id: "openai", label: "OpenAI" },
+            { id: "google", label: "Google" },
+            { id: "openrouter", label: "OpenRouter" },
+            { id: "azure", label: "Azure" },
+        ],
+    },
+    {
+        title: "Domestic Models",
+        description: "MiniMax, Kimi, Bailian, Xiaomi MiMo, Zhipu, and DeepSeek templates.",
+        templates: [
+            { id: "minimax-cn", label: "MiniMax CN" },
+            { id: "minimax-intl", label: "MiniMax Global" },
+            { id: "minimax-token-plan-cn", label: "MiniMax Token Plan CN" },
+            { id: "minimax-token-plan-intl", label: "MiniMax Token Plan Global" },
+            { id: "kimi-cn", label: "Kimi CN" },
+            { id: "kimi-intl", label: "Kimi Global" },
+            { id: "bailian-cn", label: "Bailian Beijing" },
+            { id: "bailian-us", label: "Bailian Virginia" },
+            { id: "bailian-sg", label: "Bailian Singapore" },
+            { id: "zhipu", label: "Zhipu" },
+            { id: "deepseek-openai", label: "DeepSeek OpenAI" },
+            { id: "deepseek-anthropic", label: "DeepSeek Anthropic" },
+            { id: "xiaomi-mimo", label: "Xiaomi MiMo" },
+        ],
+    },
+    {
+        title: "Custom",
+        description: "Custom OpenAI-compatible endpoint.",
+        templates: [{ id: "custom", label: "Custom" }],
+    },
+];
 
 function parseConfig(content: string): WaveAIConfig {
     if (content.trim() === "") {
@@ -58,7 +134,7 @@ function parseConfig(content: string): WaveAIConfig {
     }
     const parsed = JSON.parse(content);
     if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error(t("Wave AI modes must be a JSON object."));
+        throw new Error(t("Wave AI models must be a JSON object."));
     }
     return parsed as WaveAIConfig;
 }
@@ -102,8 +178,34 @@ function patchMode(config: WaveAIConfig, key: string, patch: Partial<WaveAIModeC
     return { ...config, [key]: nextMode };
 }
 
-function makeTemplate(config: WaveAIConfig, provider: Provider): [string, WaveAIModeConfig] {
-    if (provider === "openai") {
+function customTemplate(
+    config: WaveAIConfig,
+    baseKey: string,
+    displayName: string,
+    description: string,
+    apiType: ApiType,
+    model: string,
+    endpoint: string,
+    secretName: string,
+    capabilities: Capability[] = ["tools"]
+): [string, WaveAIModeConfig] {
+    return [
+        makeModeKey(config, baseKey),
+        {
+            "display:name": displayName,
+            "display:description": description,
+            "ai:provider": "custom",
+            "ai:apitype": apiType,
+            "ai:model": model,
+            "ai:endpoint": endpoint,
+            "ai:apitokensecretname": secretName,
+            "ai:capabilities": capabilities,
+        },
+    ];
+}
+
+function makeTemplate(config: WaveAIConfig, templateId: TemplateId): [string, WaveAIModeConfig] {
+    if (templateId === "openai") {
         return [
             makeModeKey(config, "ai@openai"),
             {
@@ -117,7 +219,7 @@ function makeTemplate(config: WaveAIConfig, provider: Provider): [string, WaveAI
             },
         ];
     }
-    if (provider === "google") {
+    if (templateId === "google") {
         return [
             makeModeKey(config, "ai@google"),
             {
@@ -131,7 +233,7 @@ function makeTemplate(config: WaveAIConfig, provider: Provider): [string, WaveAI
             },
         ];
     }
-    if (provider === "openrouter") {
+    if (templateId === "openrouter") {
         return [
             makeModeKey(config, "ai@openrouter"),
             {
@@ -145,7 +247,7 @@ function makeTemplate(config: WaveAIConfig, provider: Provider): [string, WaveAI
             },
         ];
     }
-    if (provider === "azure") {
+    if (templateId === "azure") {
         return [
             makeModeKey(config, "ai@azure"),
             {
@@ -159,15 +261,54 @@ function makeTemplate(config: WaveAIConfig, provider: Provider): [string, WaveAI
             },
         ];
     }
+    if (templateId === "minimax-cn") {
+        return customTemplate(config, "ai@minimax-cn", "MiniMax CN", "MiniMax pay-as-you-go China endpoint", "openai-chat", "MiniMax-M2.7", "https://api.minimaxi.com/v1/chat/completions", "MINIMAX_API_KEY", ["tools"]);
+    }
+    if (templateId === "minimax-intl") {
+        return customTemplate(config, "ai@minimax-global", "MiniMax Global", "MiniMax pay-as-you-go global endpoint", "openai-chat", "MiniMax-M2.7", "https://api.minimax.io/v1/chat/completions", "MINIMAX_API_KEY", ["tools"]);
+    }
+    if (templateId === "minimax-token-plan-cn") {
+        return customTemplate(config, "ai@minimax-token-cn", "MiniMax Token Plan CN", "MiniMax Token Plan China endpoint", "anthropic-messages", "MiniMax-M2.7", "https://api.minimaxi.com/anthropic/v1/messages", "MINIMAX_API_KEY", ["tools"]);
+    }
+    if (templateId === "minimax-token-plan-intl") {
+        return customTemplate(config, "ai@minimax-token-global", "MiniMax Token Plan Global", "MiniMax Token Plan global endpoint", "anthropic-messages", "MiniMax-M2.7", "https://api.minimax.io/anthropic/v1/messages", "MINIMAX_API_KEY", ["tools"]);
+    }
+    if (templateId === "kimi-cn") {
+        return customTemplate(config, "ai@kimi-cn", "Kimi CN", "Moonshot Kimi China endpoint", "openai-chat", "kimi-k2.5", "https://api.moonshot.cn/v1/chat/completions", "MOONSHOT_API_KEY", ["tools", "images"]);
+    }
+    if (templateId === "kimi-intl") {
+        return customTemplate(config, "ai@kimi-global", "Kimi Global", "Moonshot Kimi global endpoint", "openai-chat", "kimi-k2.5", "https://api.moonshot.ai/v1/chat/completions", "MOONSHOT_API_KEY", ["tools", "images"]);
+    }
+    if (templateId === "bailian-cn") {
+        return customTemplate(config, "ai@bailian-cn", "Alibaba Bailian Beijing", "Alibaba Cloud Model Studio Beijing endpoint", "openai-chat", "qwen-plus", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY", ["tools", "images"]);
+    }
+    if (templateId === "bailian-us") {
+        return customTemplate(config, "ai@bailian-us", "Alibaba Bailian Virginia", "Alibaba Cloud Model Studio Virginia endpoint", "openai-chat", "qwen-plus", "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY", ["tools", "images"]);
+    }
+    if (templateId === "bailian-sg") {
+        return customTemplate(config, "ai@bailian-sg", "Alibaba Bailian Singapore", "Alibaba Cloud Model Studio Singapore endpoint", "openai-chat", "qwen-plus", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY", ["tools", "images"]);
+    }
+    if (templateId === "zhipu") {
+        return customTemplate(config, "ai@zhipu", "Zhipu GLM", "Zhipu OpenAI-compatible endpoint", "openai-chat", "glm-5.1", "https://open.bigmodel.cn/api/paas/v4/chat/completions", "ZAI_API_KEY", ["tools"]);
+    }
+    if (templateId === "deepseek-openai") {
+        return customTemplate(config, "ai@deepseek", "DeepSeek", "DeepSeek OpenAI-compatible endpoint", "openai-chat", "deepseek-v4-pro", "https://api.deepseek.com/chat/completions", "DEEPSEEK_API_KEY", ["tools"]);
+    }
+    if (templateId === "deepseek-anthropic") {
+        return customTemplate(config, "ai@deepseek-anthropic", "DeepSeek Anthropic", "DeepSeek Anthropic-compatible endpoint", "anthropic-messages", "deepseek-v4-pro", "https://api.deepseek.com/anthropic/v1/messages", "DEEPSEEK_API_KEY", ["tools"]);
+    }
+    if (templateId === "xiaomi-mimo") {
+        return customTemplate(config, "ai@xiaomi-mimo", "Xiaomi MiMo", "Xiaomi MiMo OpenAI-compatible endpoint", "openai-chat", "mimo-v2-pro", "https://api.xiaomimimo.com/v1/chat/completions", "MIMO_API_KEY", ["tools", "images"]);
+    }
     return [
-        makeModeKey(config, "ai@local"),
+        makeModeKey(config, "ai@custom"),
         {
-            "display:name": "Local Model",
-            "display:description": "OpenAI-compatible local endpoint",
+            "display:name": "Custom",
+            "display:description": "Custom OpenAI-compatible endpoint",
             "ai:provider": "custom",
             "ai:apitype": "openai-chat",
             "ai:model": "llama3.1",
-            "ai:endpoint": "http://localhost:11434/v1",
+            "ai:endpoint": "http://localhost:11434/v1/chat/completions",
             "ai:capabilities": ["tools"],
         },
     ];
@@ -198,6 +339,7 @@ function TextInput({
     placeholder,
     mono,
     type = "text",
+    list,
     onBlur,
 }: {
     value: string;
@@ -205,6 +347,7 @@ function TextInput({
     placeholder?: string;
     mono?: boolean;
     type?: string;
+    list?: string;
     onBlur?: () => void;
 }) {
     return (
@@ -214,9 +357,8 @@ function TextInput({
             onChange={(e) => onChange(e.target.value)}
             onBlur={onBlur}
             placeholder={placeholder}
-            className={`rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent ${
-                mono ? "font-mono" : ""
-            }`}
+            list={list}
+            className={`${WaveConfigFieldClass} ${mono ? "font-mono" : ""}`}
         />
     );
 }
@@ -234,7 +376,7 @@ function SelectInput<T extends string>({
         <select
             value={value}
             onChange={(e) => onChange(e.target.value ? (e.target.value as T) : undefined)}
-            className="rounded border border-border bg-secondary px-3 py-2 text-primary outline-none focus:border-accent"
+            className={WaveConfigFieldClass}
         >
             <option value="">{t("Use provider default")}</option>
             {options.map((option) => (
@@ -248,7 +390,7 @@ function SelectInput<T extends string>({
 
 export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel }) => {
     const [fileContent, setFileContent] = useAtom(model.fileContentAtom);
-    const [selectedKey, setSelectedKey] = useState("");
+    const [editingKey, setEditingKey] = useState("");
     const [keyDraft, setKeyDraft] = useState("");
     const parseResult = useMemo(() => {
         try {
@@ -265,77 +407,78 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
     }, [parseResult.config]);
 
     useEffect(() => {
-        if (!selectedKey && entries.length > 0) {
-            setSelectedKey(entries[0][0]);
-        } else if (selectedKey && !parseResult.config[selectedKey]) {
-            setSelectedKey(entries[0]?.[0] ?? "");
+        if (editingKey && !parseResult.config[editingKey]) {
+            setEditingKey("");
         }
-    }, [entries, parseResult.config, selectedKey]);
+    }, [editingKey, parseResult.config]);
 
     useEffect(() => {
-        setKeyDraft(selectedKey);
-    }, [selectedKey]);
+        setKeyDraft(editingKey);
+    }, [editingKey]);
 
     const writeConfig = (nextConfig: WaveAIConfig) => {
         setFileContent(formatConfig(nextConfig));
         model.markAsEdited();
     };
 
-    const selectedMode = selectedKey ? parseResult.config[selectedKey] : null;
+    const selectedMode = editingKey ? parseResult.config[editingKey] : null;
 
-    const addMode = (provider: Provider) => {
-        const [key, mode] = makeTemplate(parseResult.config, provider);
+    const addMode = (templateId: TemplateId) => {
+        const [key, mode] = makeTemplate(parseResult.config, templateId);
         const maxOrder = Math.max(0, ...Object.values(parseResult.config).map((modeConfig) => modeConfig["display:order"] ?? 0));
         const nextConfig = { ...parseResult.config, [key]: { ...mode, "display:order": maxOrder + 10 } };
         writeConfig(nextConfig);
-        setSelectedKey(key);
+        setEditingKey(key);
     };
 
-    const duplicateMode = () => {
-        if (!selectedMode) return;
-        const key = makeModeKey(parseResult.config, `${selectedKey}-copy`);
+    const duplicateMode = (sourceKey: string) => {
+        const sourceMode = parseResult.config[sourceKey];
+        if (!sourceMode) return;
+        const key = makeModeKey(parseResult.config, `${sourceKey}-copy`);
         writeConfig({
             ...parseResult.config,
             [key]: {
-                ...selectedMode,
-                "display:name": `${selectedMode["display:name"]} Copy`,
-                "display:order": (selectedMode["display:order"] ?? entries.length * 10) + 1,
+                ...sourceMode,
+                "display:name": `${sourceMode["display:name"]} Copy`,
+                "display:order": (sourceMode["display:order"] ?? entries.length * 10) + 1,
             },
         });
-        setSelectedKey(key);
+        setEditingKey(key);
     };
 
-    const deleteMode = () => {
-        if (!selectedKey || !window.confirm(t("Delete this AI mode?"))) return;
+    const deleteMode = (key: string) => {
+        if (!key || !window.confirm(t("Delete this AI model?"))) return;
         const nextConfig = { ...parseResult.config };
-        delete nextConfig[selectedKey];
+        delete nextConfig[key];
         writeConfig(nextConfig);
-        setSelectedKey(Object.keys(nextConfig)[0] ?? "");
+        if (editingKey === key) {
+            setEditingKey("");
+        }
     };
 
     const updateMode = (patch: Partial<WaveAIModeConfig>) => {
-        if (!selectedKey) return;
-        writeConfig(patchMode(parseResult.config, selectedKey, patch));
+        if (!editingKey) return;
+        writeConfig(patchMode(parseResult.config, editingKey, patch));
     };
 
     const renameMode = () => {
         const nextKey = keyDraft.trim();
-        if (!selectedKey || nextKey === selectedKey) return;
+        if (!editingKey || nextKey === editingKey) return;
         if (!ModeKeyPattern.test(nextKey)) {
-            window.alert(t("Mode key can only contain letters, numbers, underscores, @, dots, and hyphens."));
-            setKeyDraft(selectedKey);
+            window.alert(t("Model key can only contain letters, numbers, underscores, @, dots, and hyphens."));
+            setKeyDraft(editingKey);
             return;
         }
         if (parseResult.config[nextKey]) {
-            window.alert(t("A mode with this key already exists."));
-            setKeyDraft(selectedKey);
+            window.alert(t("An AI model with this key already exists."));
+            setKeyDraft(editingKey);
             return;
         }
         const nextConfig = { ...parseResult.config };
-        nextConfig[nextKey] = nextConfig[selectedKey];
-        delete nextConfig[selectedKey];
+        nextConfig[nextKey] = nextConfig[editingKey];
+        delete nextConfig[editingKey];
         writeConfig(nextConfig);
-        setSelectedKey(nextKey);
+        setEditingKey(nextKey);
     };
 
     const toggleCapability = (capability: Capability) => {
@@ -359,67 +502,135 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
     }
 
     return (
-        <div className="grid h-full grid-cols-[260px_1fr] overflow-hidden bg-background @max-w800:grid-cols-1">
-            <aside className="flex min-h-0 flex-col border-r border-border @max-w800:border-b @max-w800:border-r-0">
-                <div className="border-b border-border p-3">
-                    <div className="text-sm font-semibold">{t("AI Modes")}</div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        {(["openai", "google", "openrouter", "azure", "custom"] as Provider[]).map((provider) => (
-                            <button
-                                key={provider}
-                                type="button"
-                                onClick={() => addMode(provider)}
-                                className="rounded border border-border px-2 py-1 text-xs hover:bg-hover"
-                            >
-                                <i className="fa fa-plus mr-1" />
-                                {provider === "custom" ? t("Local") : provider}
-                            </button>
+        <div className="h-full overflow-auto bg-background">
+            <datalist id="wave-ai-model-suggestions">
+                {ModelSuggestions.map((modelName) => (
+                    <option key={modelName} value={modelName} />
+                ))}
+            </datalist>
+            <main className="flex w-full flex-col gap-4 p-4">
+                <section className="overflow-hidden rounded-lg border border-border bg-panel">
+                    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
+                        <div>
+                            <div className="text-base font-semibold">{t("Existing AI Models")}</div>
+                            <div className="mt-1 text-sm text-muted">{t("Custom and BYOK")}</div>
+                        </div>
+                        <div className="rounded-md border border-border bg-background/40 px-3 py-2 text-xs text-muted">
+                            {t("{count} models", { count: entries.length })}
+                        </div>
+                    </div>
+                    {entries.length === 0 ? (
+                        <div className="px-4 py-5 text-sm text-muted">{t("No AI models configured.")}</div>
+                    ) : (
+                        <div className="divide-y divide-border">
+                            {entries.map(([key, mode]) => (
+                                <div
+                                    key={key}
+                                    className={`grid gap-3 px-4 py-3 @w900:grid-cols-[minmax(0,1fr)_auto] @w900:items-center ${
+                                        editingKey === key ? "bg-hoverbg shadow-[inset_3px_0_0_var(--accent-color)]" : ""
+                                    }`}
+                                >
+                                    <div className="min-w-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <div className="font-semibold text-primary">{mode["display:name"] || key}</div>
+                                            <span className="rounded-md border border-border bg-background/40 px-1.5 py-0.5 font-mono text-[11px] text-muted">
+                                                {key}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+                                            <span>{mode["ai:provider"] || t("Provider default")}</span>
+                                            {mode["ai:model"] && <span className="font-mono">{mode["ai:model"]}</span>}
+                                            {mode["ai:apitype"] && <span>{mode["ai:apitype"]}</span>}
+                                            {mode["ai:capabilities"]?.map((capability) => (
+                                                <span key={capability} className="rounded border border-accent/30 bg-accent/10 px-1.5 py-0.5 text-accent">
+                                                    {capability}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 @w900:justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingKey(key)}
+                                            className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm text-secondary transition-colors hover:bg-hover hover:text-primary"
+                                        >
+                                            {t("Edit")}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => duplicateMode(key)}
+                                            className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm text-secondary transition-colors hover:bg-hover hover:text-primary"
+                                        >
+                                            {t("Duplicate")}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => deleteMode(key)}
+                                            className="rounded-md border border-error px-3 py-2 text-sm text-error transition-colors hover:bg-error/10"
+                                        >
+                                            {t("Delete")}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className="rounded-lg border border-border bg-panel p-4">
+                    <div className="flex flex-col gap-4">
+                        <div>
+                            <div className="text-base font-semibold">{t("New AI Model")}</div>
+                            <div className="mt-1 text-sm text-muted">{t("Choose a provider template, then edit its details.")}</div>
+                        </div>
+                        {TemplateGroups.map((group) => (
+                            <div key={group.title} className="rounded-md border border-border bg-background/20 p-3">
+                                <div className="flex flex-wrap items-baseline gap-2">
+                                    <div className="text-sm font-semibold text-primary">{t(group.title)}</div>
+                                    <div className="text-xs text-muted">{t(group.description)}</div>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {group.templates.map((template) => (
+                                        <button
+                                            key={template.id}
+                                            type="button"
+                                            onClick={() => addMode(template.id)}
+                                            title={template.description ? t(template.description) : undefined}
+                                            className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm text-secondary transition-colors hover:bg-hover hover:text-primary"
+                                        >
+                                            <i className="fa fa-plus mr-1" />
+                                            {t(template.label)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
-                </div>
-                <div className="min-h-0 flex-1 overflow-auto">
-                    {entries.map(([key, mode]) => (
-                        <button
-                            key={key}
-                            type="button"
-                            onClick={() => setSelectedKey(key)}
-                            className={`flex w-full flex-col gap-1 border-b border-border px-3 py-2 text-left hover:bg-hover ${
-                                selectedKey === key ? "bg-accentbg" : ""
-                            }`}
-                        >
-                            <span className="font-medium">{mode["display:name"] || key}</span>
-                            <span className="truncate font-mono text-xs text-muted">{key}</span>
-                            <span className="truncate text-xs text-muted">{mode["ai:provider"] || t("Provider default")}</span>
-                        </button>
-                    ))}
-                    {entries.length === 0 && <div className="p-4 text-sm text-muted">{t("No AI modes configured.")}</div>}
-                </div>
-            </aside>
+                </section>
 
-            <main className="min-h-0 overflow-auto p-5">
                 {!selectedMode ? (
-                    <div className="rounded border border-border bg-secondary/40 p-5 text-sm text-muted">
-                        {t("Create an AI mode from the left panel to begin.")}
+                    <div className="rounded-lg border border-border bg-panel p-5 text-sm text-muted">
+                        {t("Select an AI model to edit, or create a new one.")}
                     </div>
                 ) : (
-                    <div className="mx-auto flex max-w-5xl flex-col gap-5">
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+                    <div className="flex w-full flex-col gap-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-panel p-4">
                             <div>
-                                <div className="text-base font-semibold">{selectedMode["display:name"]}</div>
-                                <div className="font-mono text-xs text-muted">{selectedKey}</div>
+                                <div className="text-sm font-semibold text-accent">{t("Edit Model")}</div>
+                                <div className="mt-1 text-base font-semibold">{selectedMode["display:name"]}</div>
+                                <div className="font-mono text-xs text-muted">{editingKey}</div>
                             </div>
-                            <div className="flex gap-2">
-                                <button type="button" onClick={duplicateMode} className="rounded border border-border px-3 py-2 text-sm hover:bg-hover">
-                                    {t("Duplicate")}
-                                </button>
-                                <button type="button" onClick={deleteMode} className="rounded border border-error px-3 py-2 text-sm text-error hover:bg-error/10">
-                                    {t("Delete")}
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setEditingKey("")}
+                                className="rounded-md border border-border bg-background/40 px-3 py-2 text-sm text-secondary transition-colors hover:bg-hover hover:text-primary"
+                            >
+                                {t("Close")}
+                            </button>
                         </div>
 
-                        <section className="grid gap-4 @w900:grid-cols-2">
-                            <FormRow label={t("Mode Key")} help={t("Used by waveai:defaultmode and mode switching.")}>
+                        <section className="grid gap-4 rounded-lg border border-border bg-panel p-4 @w900:grid-cols-2">
+                            <FormRow label={t("Model Key")} help={t("Used by waveai:defaultmode and model switching.")}>
                                 <TextInput value={keyDraft} onChange={setKeyDraft} onBlur={renameMode} mono />
                             </FormRow>
                             <FormRow label={t("Display Name")}>
@@ -443,7 +654,7 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
                             </FormRow>
                         </section>
 
-                        <section className="grid gap-4 @w900:grid-cols-2">
+                        <section className="grid gap-4 rounded-lg border border-border bg-panel p-4 @w900:grid-cols-2">
                             <FormRow label={t("Provider")}>
                                 <SelectInput value={selectedMode["ai:provider"] ?? ""} options={ProviderOptions} onChange={(value) => updateMode({ "ai:provider": value })} />
                             </FormRow>
@@ -451,10 +662,10 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
                                 <SelectInput value={selectedMode["ai:apitype"] ?? ""} options={ApiTypeOptions} onChange={(value) => updateMode({ "ai:apitype": value })} />
                             </FormRow>
                             <FormRow label={t("Model")}>
-                                <TextInput value={selectedMode["ai:model"] ?? ""} onChange={(value) => updateMode({ "ai:model": value })} mono />
+                                <TextInput value={selectedMode["ai:model"] ?? ""} onChange={(value) => updateMode({ "ai:model": value })} list="wave-ai-model-suggestions" mono />
                             </FormRow>
                             <FormRow label={t("Endpoint")}>
-                                <TextInput value={selectedMode["ai:endpoint"] ?? ""} onChange={(value) => updateMode({ "ai:endpoint": value })} placeholder="http://localhost:11434/v1" mono />
+                                <TextInput value={selectedMode["ai:endpoint"] ?? ""} onChange={(value) => updateMode({ "ai:endpoint": value })} placeholder="http://localhost:11434/v1/chat/completions" mono />
                             </FormRow>
                             <FormRow label={t("API Token Secret Name")} help={t("Recommended: store the real token in Secrets and reference it here.")}>
                                 <TextInput
@@ -472,7 +683,7 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
                             </FormRow>
                         </section>
 
-                        <section className="grid gap-4 @w900:grid-cols-2">
+                        <section className="grid gap-4 rounded-lg border border-border bg-panel p-4 @w900:grid-cols-2">
                             <FormRow label={t("Thinking Level")}>
                                 <SelectInput
                                     value={selectedMode["ai:thinkinglevel"] ?? ""}
@@ -490,10 +701,10 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
                                             key={capability}
                                             type="button"
                                             onClick={() => toggleCapability(capability)}
-                                            className={`rounded border px-3 py-2 text-sm ${
+                                            className={`rounded-md border px-3 py-2 text-sm transition-colors ${
                                                 selectedMode["ai:capabilities"]?.includes(capability)
-                                                    ? "border-accent bg-accentbg text-primary"
-                                                    : "border-border hover:bg-hover"
+                                                    ? "border-accent/50 bg-accent/15 text-accent"
+                                                    : "border-border bg-background/40 text-secondary hover:bg-hover hover:text-primary"
                                             }`}
                                         >
                                             {capability}
@@ -501,17 +712,17 @@ export const WaveAIVisualContent = memo(({ model }: { model: WaveConfigViewModel
                                     ))}
                                 </div>
                             </FormRow>
-                            <FormRow label={t("Compatible Mode Keys")}>
+                            <FormRow label={t("Compatible Model Keys")}>
                                 <TextInput
                                     value={splitList(selectedMode["ai:switchcompat"])}
                                     onChange={(value) => updateMode({ "ai:switchcompat": parseList(value) })}
-                                    placeholder="ai@openai, ai@local"
+                                    placeholder="ai@openai, ai@custom"
                                     mono
                                 />
                             </FormRow>
                         </section>
 
-                        <section className="grid gap-4 @w900:grid-cols-2">
+                        <section className="grid gap-4 rounded-lg border border-border bg-panel p-4 @w900:grid-cols-2">
                             <FormRow label={t("Azure Resource Name")}>
                                 <TextInput value={selectedMode["ai:azureresourcename"] ?? ""} onChange={(value) => updateMode({ "ai:azureresourcename": value })} mono />
                             </FormRow>

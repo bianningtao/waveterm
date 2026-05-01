@@ -418,6 +418,44 @@ declare global {
         chatid: string;
     };
 
+    // wshrpc.CommandGitCommitData
+    type CommandGitCommitData = {
+        root: string;
+        message: string;
+    };
+
+    // wshrpc.CommandGitCommitRtnData
+    type CommandGitCommitRtnData = {
+        output: string;
+    };
+
+    // wshrpc.CommandGitDiffData
+    type CommandGitDiffData = {
+        root: string;
+        path: string;
+        untracked?: boolean;
+    };
+
+    // wshrpc.CommandGitDiffRtnData
+    type CommandGitDiffRtnData = {
+        path: string;
+        diff: string;
+    };
+
+    // wshrpc.CommandGitStatusData
+    type CommandGitStatusData = {
+        cwd: string;
+    };
+
+    // wshrpc.CommandGitStatusRtnData
+    type CommandGitStatusRtnData = {
+        root: string;
+        branch: string;
+        files: GitFileStatus[];
+        notagit?: boolean;
+        errormsg?: string;
+    };
+
     // wshrpc.CommandJobCmdExitedData
     type CommandJobCmdExitedData = {
         jobid: string;
@@ -1028,6 +1066,15 @@ declare global {
         configerrors: ConfigError[];
         version: string;
         buildtime: string;
+    };
+
+    // wshrpc.GitFileStatus
+    type GitFileStatus = {
+        path: string;
+        originalpath?: string;
+        indexstatus: string;
+        worktreestatus: string;
+        kind: string;
     };
 
     // waveobj.Job

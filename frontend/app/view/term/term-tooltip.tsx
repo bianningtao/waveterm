@@ -1,6 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { t } from "@/app/i18n";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
 import { FloatingPortal, VirtualElement, flip, offset, shift, useFloating } from "@floating-ui/react";
 import * as React from "react";
@@ -92,6 +93,7 @@ interface TermLinkTooltipProps {
  */
 export const TermLinkTooltip = React.memo(function TermLinkTooltip({ termWrap }: TermLinkTooltipProps) {
     const [mousePos, setMousePos] = React.useState<{ x: number; y: number } | null>(null);
+    const [hoveredUri, setHoveredUri] = React.useState<string | null>(null);
     const timeoutRef = React.useRef<number | null>(null);
     const maxTimeoutRef = React.useRef<number | null>(null);
 
@@ -105,6 +107,7 @@ export const TermLinkTooltip = React.memo(function TermLinkTooltip({ termWrap }:
 
             if (uri == null) {
                 clearTimeoutRef(maxTimeoutRef);
+                setHoveredUri(null);
                 setMousePos(null);
                 return;
             }
@@ -112,11 +115,13 @@ export const TermLinkTooltip = React.memo(function TermLinkTooltip({ termWrap }:
             // Show after a short delay so fast mouse movements don't flicker.
             timeoutRef.current = window.setTimeout(() => {
                 timeoutRef.current = null;
+                setHoveredUri(uri);
                 setMousePos({ x: mouseX, y: mouseY });
                 // Auto-dismiss after MaxHoverTimeMs so the tooltip doesn't linger forever.
                 clearTimeoutRef(maxTimeoutRef);
                 maxTimeoutRef.current = window.setTimeout(() => {
                     maxTimeoutRef.current = null;
+                    setHoveredUri(null);
                     setMousePos(null);
                 }, MaxHoverTimeMs);
             }, HoverDelayMs);
@@ -126,9 +131,14 @@ export const TermLinkTooltip = React.memo(function TermLinkTooltip({ termWrap }:
             termWrap.onLinkHover = null;
             clearTimeoutRef(timeoutRef);
             clearTimeoutRef(maxTimeoutRef);
+            setHoveredUri(null);
             setMousePos(null);
         };
     }, [termWrap]);
 
-    return <TermTooltip mousePos={mousePos} content={<span>{modKey}-click to open link</span>} />;
+    const content = hoveredUri?.startsWith("wave-file-preview:")
+        ? t("Click to preview file")
+        : t("{modKey}-click to open link", { modKey });
+
+    return <TermTooltip mousePos={mousePos} content={<span>{content}</span>} />;
 });

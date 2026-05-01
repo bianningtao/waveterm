@@ -3,6 +3,7 @@
 
 import { CopyButton } from "@/app/element/copybutton";
 import { IconButton } from "@/app/element/iconbutton";
+import { t } from "@/app/i18n";
 import { cn, useAtomValueSafe } from "@/util/util";
 import type { Atom } from "jotai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -161,12 +162,13 @@ const CodeBlock = ({ children, onClickExecute, codeBlockMaxWidthAtom }: CodeBloc
             <div className="flex items-center justify-between pl-3 pr-2 pt-2 pb-1.5">
                 <span className="text-[11px] text-white/50">{language}</span>
                 <div className="flex items-center gap-2">
-                    <CopyButton onClick={handleCopy} title="Copy" />
+                    <CopyButton onClick={handleCopy} title={t("Copy")} />
                     {onClickExecute && (
                         <IconButton
                             decl={{
                                 elemtype: "iconbutton",
                                 icon: "regular@square-terminal",
+                                title: t("Run in Terminal"),
                                 click: handleExecute,
                             }}
                         />

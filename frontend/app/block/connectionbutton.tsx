@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { computeConnColorNum } from "@/app/block/blockutil";
+import { t } from "@/app/i18n";
 import { recordTEvent } from "@/app/store/global";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { IconButton } from "@/element/iconbutton";
@@ -147,7 +148,7 @@ export const ConnectionButton = React.memo(
                             decl={{
                                 elemtype: "iconbutton",
                                 icon: "link-slash",
-                                title: "wsh is not installed for this connection",
+                                title: t("wsh is not installed for this connection"),
                             }}
                         />
                     )}

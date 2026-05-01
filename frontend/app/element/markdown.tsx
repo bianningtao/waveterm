@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CopyButton } from "@/app/element/copybutton";
+import { t } from "@/app/i18n";
 import { createContentBlockPlugin } from "@/app/element/markdown-contentblock-plugin";
 import {
     MarkdownContentBlockType,
@@ -166,12 +167,13 @@ const CodeBlock = ({ children, onClickExecute }: CodeBlockProps) => {
         <pre className="codeblock">
             {children}
             <div className="codeblock-actions">
-                <CopyButton onClick={handleCopy} title="Copy" />
+                <CopyButton onClick={handleCopy} title={t("Copy")} />
                 {onClickExecute && (
                     <IconButton
                         decl={{
                             elemtype: "iconbutton",
                             icon: "regular@square-terminal",
+                            title: t("Run in Terminal"),
                             click: handleExecute,
                         }}
                     />

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/app/element/tooltip";
+import { t } from "@/app/i18n";
 import { getTabBadgeAtom } from "@/app/store/badge";
 import { getTabModelByTabId } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
@@ -36,7 +37,7 @@ const VTabBarAIButton = memo(() => {
 
     return (
         <Tooltip
-            content="Toggle Wave AI Panel"
+            content={t("Toggle Wave AI Panel")}
             placement="bottom"
             hideOnClick
             divClassName={`flex h-[22px] px-3.5 justify-end mb-1 items-center rounded-md mr-1 box-border cursor-pointer bg-hover hover:bg-hoverbg transition-colors text-[12px] ${aiPanelOpen ? "text-accent" : "text-secondary"}`}
@@ -70,7 +71,7 @@ const MacOSHeader = memo(() => {
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
             >
                 <VTabBarAIButton />
-                <Tooltip content="Workspace Switcher" placement="bottom" hideOnClick divClassName="flex items-center">
+                <Tooltip content={t("Workspace Switcher")} placement="bottom" hideOnClick divClassName="flex items-center">
                     <WorkspaceSwitcher />
                 </Tooltip>
                 <UpdateStatusBanner />
@@ -440,11 +441,11 @@ export function VTabBar({ workspace, className }: VTabBarProps) {
                 onClick={() => env.electron.createTab()}
                 onMouseEnter={() => setIsNewTabHovered(true)}
                 onMouseLeave={() => setIsNewTabHovered(false)}
-                aria-label="New Tab"
+                aria-label={t("New Tab")}
             >
                 <div className="pointer-events-none absolute inset-x-1 inset-y-[4px] rounded-sm bg-transparent transition-colors group-hover:bg-hover" />
                 <i className="fa fa-solid fa-plus" style={{ fontSize: "10px" }} />
-                <span>New Tab</span>
+                <span>{t("New Tab")}</span>
             </button>
         </div>
     );
