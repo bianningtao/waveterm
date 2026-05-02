@@ -1341,11 +1341,13 @@ func (ws *WshServer) ListWaveAIChatsCommand(ctx context.Context) ([]wshrpc.WaveA
 		rtn = append(rtn, wshrpc.WaveAIChatHistoryEntry{
 			ChatId:       entry.ChatId,
 			Title:        entry.Title,
+			CreatedTs:    entry.CreatedTs,
 			UpdatedTs:    entry.UpdatedTs,
 			APIType:      entry.APIType,
 			Model:        entry.Model,
 			APIVersion:   entry.APIVersion,
 			MessageCount: entry.MessageCount,
+			SessionPath:  entry.SessionPath,
 		})
 	}
 	return rtn, nil

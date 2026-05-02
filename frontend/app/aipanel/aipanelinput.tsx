@@ -9,6 +9,7 @@ import { Tooltip } from "@/element/tooltip";
 import { cn } from "@/util/util";
 import { useAtom, useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef } from "react";
+import { AIModeDropdown } from "./aimode";
 
 interface AIPanelInputProps {
     onSubmit: (e: React.FormEvent) => void;
@@ -26,9 +27,14 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     const [input, setInput] = useAtom(model.inputAtom);
     const isFocused = useAtomValue(model.isWaveAIFocusedAtom);
     const isChatEmpty = useAtomValue(model.isChatEmptyAtom);
+    const droppedFiles = useAtomValue(model.droppedFiles);
+    const widgetAccess = useAtomValue(model.widgetAccessAtom);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isPanelOpen = useAtomValue(model.getPanelVisibleAtom());
+    const isBusy = status === "streaming" || status === "submitted";
+    const canSubmit =
+        (status === "ready" || status === "error") && (input.trim().length > 0 || droppedFiles.length > 0);
 
     let placeholder: string;
     if (!isChatEmpty) {
@@ -134,7 +140,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     };
 
     return (
-        <div className={cn("border-t", isFocused ? "border-accent/50" : "border-gray-600")}>
+        <div className={cn("px-2 pb-2 pt-1", isFocused ? "border-accent/50" : "border-gray-600")}>
             <input
                 ref={fileInputRef}
                 type="file"
@@ -144,7 +150,12 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                 className="hidden"
             />
             <form onSubmit={onSubmit}>
-                <div className="relative">
+                <div
+                    className={cn(
+                        "rounded-2xl border bg-zinc-800/90 shadow-sm transition-colors",
+                        isFocused ? "border-accent/60" : "border-zinc-600/80 hover:border-zinc-500"
+                    )}
+                >
                     <textarea
                         ref={textareaRef}
                         value={input}
@@ -154,55 +165,86 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
                         onBlur={handleBlur}
                         placeholder={placeholder}
                         className={cn(
-                            "w-full  text-white px-2 py-2 pr-5 focus:outline-none resize-none overflow-auto bg-zinc-800/50"
+                            "w-full text-white px-3 pt-3 pb-2 focus:outline-none resize-none overflow-auto bg-transparent placeholder:text-gray-500"
                         )}
                         style={{ fontSize: "13px" }}
                         rows={2}
                     />
-                    <Tooltip content={t("Attach files")} placement="top" divClassName="absolute bottom-6.5 right-1">
-                        <button
-                            type="button"
-                            onClick={handleUploadClick}
-                            className={cn(
-                                "w-5 h-5 transition-colors flex items-center justify-center text-gray-400 hover:text-accent cursor-pointer"
+                    <div className="flex items-center justify-between gap-2 px-2 pb-2">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <Tooltip content={t("Attach files")} placement="top">
+                                <button
+                                    type="button"
+                                    onClick={handleUploadClick}
+                                    className={cn(
+                                        "h-7 w-7 rounded-full transition-colors flex items-center justify-center",
+                                        "text-gray-300 hover:text-white hover:bg-zinc-700 cursor-pointer"
+                                    )}
+                                    aria-label={t("Attach files")}
+                                >
+                                    <i className="fa fa-paperclip text-sm"></i>
+                                </button>
+                            </Tooltip>
+                            <AIModeDropdown compatibilityMode={!isChatEmpty} menuPlacement="top" />
+                            {!model.inBuilder && (
+                                <Tooltip
+                                    content={t("Widget Access {state}", { state: widgetAccess ? t("ON") : t("OFF") })}
+                                    placement="top"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            model.setWidgetAccess(!widgetAccess);
+                                            setTimeout(() => {
+                                                model.focusInput();
+                                            }, 0);
+                                        }}
+                                        className={cn(
+                                            "hidden @xs:flex h-7 items-center gap-1.5 rounded-full border px-2 text-[11px] transition-colors cursor-pointer",
+                                            widgetAccess
+                                                ? "border-accent/40 bg-accent/10 text-accent hover:bg-accent/15"
+                                                : "border-zinc-600 bg-zinc-800 text-gray-400 hover:bg-zinc-700 hover:text-gray-200"
+                                        )}
+                                    >
+                                        <i className="fa fa-plug text-[10px]"></i>
+                                        <span>{widgetAccess ? t("Context On") : t("Context Off")}</span>
+                                    </button>
+                                </Tooltip>
                             )}
-                        >
-                            <i className="fa fa-paperclip text-sm"></i>
-                        </button>
-                    </Tooltip>
-                    {status === "streaming" ? (
-                        <Tooltip content={t("Stop Response")} placement="top" divClassName="absolute bottom-1.5 right-1">
-                            <button
-                                type="button"
-                                onClick={() => model.stopResponse()}
-                                className={cn(
-                                    "w-5 h-5 transition-colors flex items-center justify-center",
-                                    "text-green-500 hover:text-green-400 cursor-pointer"
-                                )}
-                            >
-                                <i className="fa fa-square text-sm"></i>
-                            </button>
-                        </Tooltip>
-                    ) : (
-                        <Tooltip
-                            content={t("Send message (Enter)")}
-                            placement="top"
-                            divClassName="absolute bottom-1.5 right-1"
-                        >
-                            <button
-                                type="submit"
-                                disabled={status !== "ready" || !input.trim()}
-                                className={cn(
-                                    "w-5 h-5 transition-colors flex items-center justify-center",
-                                    status !== "ready" || !input.trim()
-                                        ? "text-gray-400"
-                                        : "text-accent/80 hover:text-accent cursor-pointer"
-                                )}
-                            >
-                                <i className="fa fa-paper-plane text-sm"></i>
-                            </button>
-                        </Tooltip>
-                    )}
+                        </div>
+
+                        {isBusy ? (
+                            <Tooltip content={t("Stop Response")} placement="top">
+                                <button
+                                    type="button"
+                                    onClick={() => model.stopResponse()}
+                                    className={cn(
+                                        "h-8 w-8 rounded-full transition-colors flex items-center justify-center",
+                                        "bg-zinc-200 text-zinc-950 hover:bg-white cursor-pointer"
+                                    )}
+                                    aria-label={t("Stop Response")}
+                                >
+                                    <i className="fa fa-square text-xs"></i>
+                                </button>
+                            </Tooltip>
+                        ) : (
+                            <Tooltip content={t("Send message (Enter)")} placement="top">
+                                <button
+                                    type="submit"
+                                    disabled={!canSubmit}
+                                    className={cn(
+                                        "h-8 w-8 rounded-full transition-colors flex items-center justify-center",
+                                        canSubmit
+                                            ? "bg-accent text-white hover:bg-accent/90 cursor-pointer"
+                                            : "bg-zinc-700 text-gray-500 cursor-default"
+                                    )}
+                                    aria-label={t("Send message (Enter)")}
+                                >
+                                    <i className="fa fa-arrow-up text-sm"></i>
+                                </button>
+                            </Tooltip>
+                        )}
+                    </div>
                 </div>
             </form>
         </div>

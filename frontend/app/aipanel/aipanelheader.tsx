@@ -3,6 +3,7 @@
 
 import { handleWaveAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
 import { t } from "@/app/i18n";
+import { cn } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo } from "react";
 import { WaveAIModel } from "./waveai-model";
@@ -29,19 +30,34 @@ export const AIPanelHeader = memo(() => {
 
     return (
         <div
-            className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-gray-600 flex items-center justify-between min-w-0"
+            className="py-2 pl-3 pr-1 @xs:p-2 @xs:pl-4 border-b border-gray-700/80 flex items-center justify-between min-w-0"
             onContextMenu={handleContextMenu}
         >
-            <h2 className="text-white text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
-                <i className="fa fa-sparkles text-accent"></i>
-                Wave AI
-            </h2>
+            <div className="flex min-w-0 items-center gap-2">
+                <h2 className="text-white text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+                    <i className="fa fa-sparkles text-accent"></i>
+                    Wave AI
+                </h2>
+                {!inBuilder && (
+                    <span
+                        className={cn(
+                            "hidden @xs:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]",
+                            widgetAccess
+                                ? "border-accent/30 bg-accent/10 text-accent"
+                                : "border-zinc-600 bg-zinc-800 text-gray-400"
+                        )}
+                        title={t("Widget Access {state}", { state: widgetAccess ? t("ON") : t("OFF") })}
+                    >
+                        <i className="fa fa-plug text-[10px]"></i>
+                        {widgetAccess ? t("Context On") : t("Context Off")}
+                    </span>
+                )}
+            </div>
 
             <div className="flex items-center flex-shrink-0 whitespace-nowrap">
                 {!inBuilder && (
-                    <div className="flex items-center text-sm whitespace-nowrap">
-                        <span className="text-gray-300 @xs:hidden mr-1 text-[12px]">{t("Context")}</span>
-                        <span className="text-gray-300 hidden @xs:inline mr-2 text-[12px]">{t("Widget Context")}</span>
+                    <div className="flex items-center text-sm whitespace-nowrap @xs:hidden">
+                        <span className="text-gray-300 mr-1 text-[12px]">{t("Context")}</span>
                         <button
                             onClick={() => {
                                 model.setWidgetAccess(!widgetAccess);

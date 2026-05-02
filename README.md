@@ -32,11 +32,14 @@ Wave also supports durable SSH sessions that survive network interruptions and r
 - 默认简体中文界面，覆盖菜单、设置、AI 面板、预览、右键菜单和常用提示。
 - Wave Config 可视化配置，支持设置、连接、侧边栏小组件、标签背景和 AI 模型，并保留 Raw JSON。
 - AI 模型配置模板，新增 MiniMax、Kimi、阿里云百炼、智谱、DeepSeek、小米 MiMo 等国内模型入口。
+- Wave AI 聊天体验优化，支持新对话直接切换自定义模型，已有对话中保留兼容性保护。
+- Wave AI 会话历史本地化保存，按 `sessions/YYYY/MM/DD/*.jsonl` 归档，历史列表只加载标题和元数据，点击后再懒加载正文。
 - Git 改动小组件，可查看文件变更、彩色 diff、预览源文件并提交改动。
 - 终端文件链接和预览增强，点击终端输出中的文件路径可在右侧预览。
+- AI 终端工具识别增强，支持 Claude Code、Codex、Gemini、Aider、OpenCode 等 agent 命令状态识别。
 - 还原点工具和 agent skill，用于在开发会话中创建、查看、对比和恢复本地文件还原点。
 - 标签固定、背景取色器、新建 AI 对话入口、完成通知等日常体验增强。
-- GitHub Actions 跨平台打包流程，支持生成 macOS arm64 DMG 和 Windows x64 安装包。
+- GitHub Actions 跨平台打包流程，`main` 分支推送或 `v*-zhcn.*` 标签会生成 macOS arm64 DMG 和 Windows x64 安装包。
 
 ## 简体中文增强版下载
 
@@ -70,6 +73,7 @@ Wave AI is your context-aware terminal assistant with access to your workspace:
 - **CLI Integration**: Use `wsh ai` to pipe output or attach files directly from the command line
 - **BYOK Support**: Bring your own API keys for OpenAI, Claude, Gemini, Azure, and other providers
 - **Local Models**: Run local models with Ollama, LM Studio, and other OpenAI-compatible providers
+- **Local Session Archive**: Chat history is indexed locally and full chat snapshots are archived as JSONL session files
 - **Free Beta**: Included AI credits while we refine the experience
 - **Coming Soon**: Command execution (with approval)
 

@@ -99,8 +99,11 @@ export function buildTabContextMenu(
     if (bgKeys.length > 0) {
         const submenu: ContextMenuItem[] = [];
         const oref = makeORef("tab", id);
+        const currentBackground = globalStore.get(getOrefMetaKeyAtom(tabORef, "tab:background")) ?? null;
         submenu.push({
             label: t("Default"),
+            type: "checkbox",
+            checked: currentBackground == null,
             click: () =>
                 fireAndForget(async () => {
                     await env.rpc.SetMetaCommand(TabRpcClient, {
@@ -115,6 +118,8 @@ export function buildTabContextMenu(
             const bg = backgrounds[bgKey];
             submenu.push({
                 label: bg["display:name"] ?? bgKey,
+                type: "checkbox",
+                checked: currentBackground === bgKey,
                 click: () =>
                     fireAndForget(async () => {
                         await env.rpc.SetMetaCommand(TabRpcClient, {

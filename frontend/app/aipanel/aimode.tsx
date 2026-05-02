@@ -22,37 +22,39 @@ interface AIModeMenuItemProps {
     isLast?: boolean;
 }
 
-const AIModeMenuItem = memo(({ config, isSelected, isDisabled, isPremiumDisabled, onClick, isFirst, isLast }: AIModeMenuItemProps) => {
-    return (
-        <button
-            key={config.mode}
-            onClick={onClick}
-            disabled={isDisabled}
-            className={cn(
-                "w-full flex flex-col gap-0.5 px-3 transition-colors text-left",
-                isFirst ? "pt-1 pb-0.5" : isLast ? "pt-0.5 pb-1" : "pt-0.5 pb-0.5",
-                isDisabled ? "text-zinc-500" : "text-zinc-300 hover:bg-zinc-700 cursor-pointer"
-            )}
-        >
-            <div className="flex items-center gap-2 w-full">
-                <i className={makeIconClass(config["display:icon"] || "sparkles", false)}></i>
-                <span className={cn("text-sm", isSelected && "font-bold")}>
-                    {getModeDisplayName(config)}
-                    {isPremiumDisabled && " (premium)"}
-                </span>
-                {isSelected && <i className="fa fa-check ml-auto"></i>}
-            </div>
-            {config["display:description"] && (
-                <div
-                    className={cn("text-xs pl-5", isDisabled ? "text-gray-500" : "text-muted")}
-                    style={{ whiteSpace: "pre-line" }}
-                >
-                    {config["display:description"]}
+const AIModeMenuItem = memo(
+    ({ config, isSelected, isDisabled, isPremiumDisabled, onClick, isFirst, isLast }: AIModeMenuItemProps) => {
+        return (
+            <button
+                key={config.mode}
+                onClick={onClick}
+                disabled={isDisabled}
+                className={cn(
+                    "w-full flex flex-col gap-0.5 px-3 transition-colors text-left",
+                    isFirst ? "pt-1 pb-0.5" : isLast ? "pt-0.5 pb-1" : "pt-0.5 pb-0.5",
+                    isDisabled ? "text-zinc-500" : "text-zinc-300 hover:bg-zinc-700 cursor-pointer"
+                )}
+            >
+                <div className="flex items-center gap-2 w-full">
+                    <i className={makeIconClass(config["display:icon"] || "sparkles", false)}></i>
+                    <span className={cn("text-sm", isSelected && "font-bold")}>
+                        {getModeDisplayName(config)}
+                        {isPremiumDisabled && " (premium)"}
+                    </span>
+                    {isSelected && <i className="fa fa-check ml-auto"></i>}
                 </div>
-            )}
-        </button>
-    );
-});
+                {config["display:description"] && (
+                    <div
+                        className={cn("text-xs pl-5", isDisabled ? "text-gray-500" : "text-muted")}
+                        style={{ whiteSpace: "pre-line" }}
+                    >
+                        {config["display:description"]}
+                    </div>
+                )}
+            </button>
+        );
+    }
+);
 
 AIModeMenuItem.displayName = "AIModeMenuItem";
 
@@ -135,9 +137,10 @@ function computeWaveCloudSections(
 
 interface AIModeDropdownProps {
     compatibilityMode?: boolean;
+    menuPlacement?: "bottom" | "top";
 }
 
-export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdownProps) => {
+export const AIModeDropdown = memo(({ compatibilityMode = false, menuPlacement = "bottom" }: AIModeDropdownProps) => {
     const model = WaveAIModel.getInstance();
     const currentMode = useAtomValue(model.currentAIMode);
     const aiModeConfigs = useAtomValue(model.aiModeConfigs);
@@ -174,7 +177,9 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
     };
 
     const displayConfig = aiModeConfigs[currentMode];
-    const displayName = displayConfig ? getModeDisplayName(displayConfig) : t("Invalid ({mode})", { mode: currentMode });
+    const displayName = displayConfig
+        ? getModeDisplayName(displayConfig)
+        : t("Invalid ({mode})", { mode: currentMode });
     const displayIcon = displayConfig ? displayConfig["display:icon"] || "sparkles" : "question";
     const resolvedConfig = waveaiModeConfigs[currentMode];
     const hasToolsSupport = resolvedConfig && resolvedConfig["ai:capabilities"]?.includes("tools");
@@ -247,7 +252,12 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-full left-0 mt-1 bg-zinc-800 border border-zinc-600 rounded shadow-lg z-50 min-w-[280px]">
+                    <div
+                        className={cn(
+                            "absolute left-0 bg-zinc-800 border border-zinc-600 rounded shadow-lg z-50 min-w-[280px] max-h-[min(420px,70vh)] overflow-y-auto",
+                            menuPlacement === "top" ? "bottom-full mb-1" : "top-full mt-1"
+                        )}
+                    >
                         {sections.map((section, sectionIndex) => {
                             const isFirstSection = sectionIndex === 0;
                             const isLastSection = sectionIndex === sections.length - 1;
