@@ -405,7 +405,9 @@ export class TermViewModel implements ViewModel {
             return null;
         }
         const shellIntegrationStatus = get(this.termRef.current.shellIntegrationStatusAtom);
-        const claudeCodeActive = get(this.termRef.current.claudeCodeActiveAtom);
+        const aiAgentCommandType = get(this.termRef.current.aiAgentCommandTypeAtom);
+        const claudeCodeActive = aiAgentCommandType === "claude";
+        const aiAgentActive = aiAgentCommandType != null;
         const icon = claudeCodeActive ? React.createElement(TermClaudeIcon) : "sparkles";
         if (shellIntegrationStatus == null) {
             return {
@@ -428,7 +430,9 @@ export class TermViewModel implements ViewModel {
         if (shellIntegrationStatus === "running-command") {
             let title = claudeCodeActive
                 ? t("Claude Code Detected")
-                : t("Shell busy - Wave AI unable to run commands while another command is running.");
+                : aiAgentActive
+                  ? t("AI agent command detected: {command}", { command: aiAgentCommandType })
+                  : t("Shell busy - Wave AI unable to run commands while another command is running.");
 
             if (this.termRef.current) {
                 const inAltBuffer = this.termRef.current.terminal?.buffer?.active?.type === "alternate";
@@ -872,9 +876,7 @@ export class TermViewModel implements ViewModel {
             }
             if (hoveredURL) {
                 menu.push({
-                    label: hoveredURL.hostname
-                        ? t("Open URL ({host})", { host: hoveredURL.hostname })
-                        : t("Open URL"),
+                    label: hoveredURL.hostname ? t("Open URL ({host})", { host: hoveredURL.hostname }) : t("Open URL"),
                     click: () => {
                         createBlock({
                             meta: {

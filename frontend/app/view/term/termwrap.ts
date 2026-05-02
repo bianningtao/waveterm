@@ -31,13 +31,14 @@ import { Terminal } from "@xterm/xterm";
 import debug from "debug";
 import * as jotai from "jotai";
 import { debounce } from "throttle-debounce";
+import { getAiAgentCommandType, type AiAgentCommandType } from "./agent-command";
 import {
     handleOsc16162Command,
     handleOsc52Command,
     handleOsc7Command,
-    isClaudeCodeCommand,
     type ShellIntegrationStatus,
 } from "./osc-handlers";
+import { findTerminalFileLinks } from "./term-file-links";
 import {
     bufferLinesToText,
     createTempFileFromBlob,
@@ -46,7 +47,6 @@ import {
     quoteForPosixShell,
     trimTerminalSelection,
 } from "./termutil";
-import { findTerminalFileLinks } from "./term-file-links";
 
 const dlog = debug("wave:termwrap");
 
@@ -104,6 +104,7 @@ export class TermWrap {
     promptMarkers: TermTypes.IMarker[] = [];
     shellIntegrationStatusAtom: jotai.PrimitiveAtom<ShellIntegrationStatus | null>;
     lastCommandAtom: jotai.PrimitiveAtom<string | null>;
+    aiAgentCommandTypeAtom: jotai.PrimitiveAtom<AiAgentCommandType | null>;
     claudeCodeActiveAtom: jotai.PrimitiveAtom<boolean>;
     nodeModel: BlockNodeModel; // this can be null
     hoveredLinkUri: string | null = null;
@@ -144,6 +145,7 @@ export class TermWrap {
         this.promptMarkers = [];
         this.shellIntegrationStatusAtom = jotai.atom(null) as jotai.PrimitiveAtom<ShellIntegrationStatus | null>;
         this.lastCommandAtom = jotai.atom(null) as jotai.PrimitiveAtom<string | null>;
+        this.aiAgentCommandTypeAtom = jotai.atom(null) as jotai.PrimitiveAtom<AiAgentCommandType | null>;
         this.claudeCodeActiveAtom = jotai.atom(false);
         this.webglEnabledAtom = jotai.atom(false) as jotai.PrimitiveAtom<boolean>;
         this.terminal = new Terminal(options);
@@ -295,7 +297,10 @@ export class TermWrap {
         };
         const dropHandler = (e: DragEvent) => {
             e.preventDefault();
-            if (!e.dataTransfer || e.dataTransfer.files.length === 0) {
+            if (!e.dataTransfer) {
+                return;
+            }
+            if (e.dataTransfer.files.length === 0) {
                 return;
             }
             const paths: string[] = [];
@@ -490,9 +495,10 @@ export class TermWrap {
             }
 
             const lastCmd = rtInfo ? rtInfo["shell:lastcmd"] : null;
-            const isCC = shellState === "running-command" && isClaudeCodeCommand(lastCmd);
+            const aiAgentCommandType = shellState === "running-command" ? getAiAgentCommandType(lastCmd) : null;
             globalStore.set(this.lastCommandAtom, lastCmd || null);
-            globalStore.set(this.claudeCodeActiveAtom, isCC);
+            globalStore.set(this.aiAgentCommandTypeAtom, aiAgentCommandType);
+            globalStore.set(this.claudeCodeActiveAtom, aiAgentCommandType === "claude");
         } catch (e) {
             console.log("Error loading runtime info:", e);
         }

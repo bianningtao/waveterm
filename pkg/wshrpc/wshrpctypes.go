@@ -551,11 +551,13 @@ type CommandGetWaveAIChatData struct {
 type WaveAIChatHistoryEntry struct {
 	ChatId       string `json:"chatid"`
 	Title        string `json:"title"`
+	CreatedTs    int64  `json:"createdts,omitempty"`
 	UpdatedTs    int64  `json:"updatedts"`
 	APIType      string `json:"apitype"`
 	Model        string `json:"model"`
 	APIVersion   string `json:"apiversion,omitempty"`
 	MessageCount int    `json:"messagecount"`
+	SessionPath  string `json:"sessionpath,omitempty"`
 }
 
 type CommandRenameWaveAIChatData struct {

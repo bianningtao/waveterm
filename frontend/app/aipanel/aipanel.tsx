@@ -5,11 +5,11 @@ import { handleWaveAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
 import { waveAIHasSelection } from "@/app/aipanel/waveai-focus-utils";
 import { useTabBackground } from "@/app/block/blockutil";
 import { ErrorBoundary } from "@/app/element/errorboundary";
+import { t } from "@/app/i18n";
 import { atoms, getSettingsKeyAtom } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { useTabModelMaybe } from "@/app/store/tab-model";
 import { isBuilderWindow } from "@/app/store/windowtype";
-import { t } from "@/app/i18n";
 import { useWaveEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { isMacOS, isWindows } from "@/util/platformutil";
@@ -249,6 +249,7 @@ const formatHistoryTime = (updatedTs: number): string => {
 
 const AIHistoryModal = memo(() => {
     const model = WaveAIModel.getInstance();
+    const env = useWaveEnv();
     const isOpen = jotai.useAtomValue(model.historyOpenAtom);
     const currentChatId = jotai.useAtomValue(model.chatId);
     const [history, setHistory] = useState<WaveAIChatHistoryEntry[]>([]);
@@ -350,6 +351,26 @@ const AIHistoryModal = memo(() => {
                                         </span>
                                     </button>
                                     <button
+                                        type="button"
+                                        disabled={!entry.sessionpath}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (entry.sessionpath) {
+                                                env.electron.openNativePath(entry.sessionpath);
+                                            }
+                                        }}
+                                        className={cn(
+                                            "p-1",
+                                            entry.sessionpath
+                                                ? "text-gray-500 hover:text-accent cursor-pointer"
+                                                : "text-gray-700 cursor-default"
+                                        )}
+                                        title={entry.sessionpath ? t("Open session file") : t("No local session file")}
+                                    >
+                                        <i className="fa fa-file-lines"></i>
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDelete(entry);

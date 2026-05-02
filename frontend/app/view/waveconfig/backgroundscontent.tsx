@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { t } from "@/app/i18n";
+import { recordTEvent } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
+import { makeORef } from "@/app/store/wos";
+import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { WaveConfigColorInputClass, WaveConfigFieldClass } from "@/app/view/waveconfig/formstyles";
 import type { WaveConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
 import { computeBgStyleFromMeta } from "@/util/waveutil";
@@ -70,9 +73,18 @@ async function saveBackgrounds(model: WaveConfigViewModel, backgrounds: Backgrou
     await model.saveFile();
 }
 
+function getBackgroundDisplayName(key: string | null, backgrounds: BackgroundsMap): string {
+    if (!key) {
+        return t("Default");
+    }
+    const bg = backgrounds[key];
+    return bg?.["display:name"] ?? key;
+}
+
 export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
     const fileContent = useAtomValue(model.fileContentAtom);
     const isSaving = useAtomValue(model.isSavingAtom);
+    const currentBgKey = useAtomValue(model.tabModel.getTabMetaAtom("tab:background")) ?? null;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [displayName, setDisplayName] = useState(t("My Background"));
     const [backgroundSource, setBackgroundSource] = useState<BackgroundSource>("image");
@@ -80,6 +92,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
     const [colorValue, setColorValue] = useState("#2563eb");
     const [opacity, setOpacity] = useState("0.55");
     const [localError, setLocalError] = useState<string | null>(null);
+    const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
     const parseResult = useMemo(() => {
         try {
@@ -119,6 +132,21 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
         }
     };
 
+    const applyBackgroundToCurrentTab = async (bgKey: string | null, backgrounds = parseResult.backgrounds) => {
+        await model.env.rpc.SetMetaCommand(TabRpcClient, {
+            oref: makeORef("tab", model.tabModel.tabId),
+            meta: { "bg:*": true, "tab:background": bgKey },
+        });
+        recordTEvent("action:settabtheme");
+        setStatusMessage(
+            bgKey
+                ? t("Applied background to current tab: {name}", {
+                      name: getBackgroundDisplayName(bgKey, backgrounds),
+                  })
+                : t("Restored current tab to default background.")
+        );
+    };
+
     const handleAdd = async () => {
         if (!canAdd) {
             setLocalError(t("Choose a background and enter a valid opacity from 0 to 1."));
@@ -137,6 +165,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
         };
         setLocalError(null);
         await saveBackgrounds(model, nextBackgrounds);
+        await applyBackgroundToCurrentTab(key, nextBackgrounds);
     };
 
     const handleDelete = async (key: string) => {
@@ -146,6 +175,9 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
         const nextBackgrounds = { ...parseResult.backgrounds };
         nextBackgrounds[key] = null;
         await saveBackgrounds(model, nextBackgrounds);
+        if (currentBgKey === key) {
+            await applyBackgroundToCurrentTab(null);
+        }
     };
 
     const previewBg =
@@ -170,7 +202,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                     <div>
                         <div className="text-base font-semibold">{t("Add Custom Background")}</div>
                         <div className="mt-1 text-sm text-muted">
-                            {t("Choose a local image or color, save it here, then apply it from a tab's background menu.")}
+                            {t("Choose a local image or color, then save and apply it to the current tab.")}
                         </div>
                     </div>
 
@@ -301,7 +333,7 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                     onClick={() => void handleAdd()}
                                     className="rounded bg-accent px-4 py-2 text-sm text-primary transition-colors hover:bg-accent/80 disabled:cursor-not-allowed disabled:border disabled:border-border disabled:bg-transparent disabled:text-muted"
                                 >
-                                    {isSaving ? t("Saving...") : t("Save Custom Background")}
+                                    {isSaving ? t("Saving...") : t("Save and Apply to Current Tab")}
                                 </button>
                             </div>
                         </div>
@@ -314,7 +346,29 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                 </section>
 
                 <section className="flex flex-col gap-3">
-                    <div className="text-base font-semibold">{t("Available Backgrounds")}</div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div className="text-base font-semibold">{t("Available Backgrounds")}</div>
+                            <div className="mt-1 text-sm text-muted">
+                                {t("Current background: {name}", {
+                                    name: getBackgroundDisplayName(currentBgKey, parseResult.backgrounds),
+                                })}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            disabled={currentBgKey == null}
+                            onClick={() => void applyBackgroundToCurrentTab(null)}
+                            className="rounded border border-border px-3 py-2 text-sm hover:bg-hover disabled:cursor-not-allowed disabled:text-muted"
+                        >
+                            {t("Use Default Background")}
+                        </button>
+                    </div>
+                    {statusMessage && (
+                        <div className="rounded border border-accent/50 bg-accent/10 px-3 py-2 text-sm text-primary">
+                            {statusMessage}
+                        </div>
+                    )}
                     <div className="grid gap-3 @w800:grid-cols-2">
                         {sortedEntries.map(([key, bg]) => (
                             <div key={key} className="flex gap-3 rounded border border-border bg-secondary/40 p-3">
@@ -323,10 +377,25 @@ export function BackgroundsContent({ model }: { model: WaveConfigViewModel }) {
                                     style={computeBgStyleFromMeta(bg, 0.55) ?? undefined}
                                 />
                                 <div className="min-w-0 flex-1">
-                                    <div className="truncate font-medium">{bg["display:name"] ?? key}</div>
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <div className="truncate font-medium">{bg["display:name"] ?? key}</div>
+                                        {currentBgKey === key && (
+                                            <span className="shrink-0 rounded border border-accent/50 bg-accent/20 px-1.5 py-0.5 text-xs text-primary">
+                                                {t("Current")}
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="truncate font-mono text-xs text-muted">{key}</div>
                                     <div className="mt-1 truncate font-mono text-xs text-muted">{bg.bg}</div>
                                 </div>
+                                <button
+                                    type="button"
+                                    disabled={currentBgKey === key}
+                                    onClick={() => void applyBackgroundToCurrentTab(key)}
+                                    className="self-start rounded border border-border px-2 py-1 text-xs hover:bg-hover disabled:cursor-default disabled:text-muted"
+                                >
+                                    {currentBgKey === key ? t("In Use") : t("Apply")}
+                                </button>
                                 {key.startsWith("bg@custom-") && (
                                     <button
                                         type="button"

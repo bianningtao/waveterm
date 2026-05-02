@@ -68,29 +68,32 @@ const UserMessageFiles = memo(({ fileParts }: UserMessageFilesProps) => {
     if (fileParts.length === 0) return null;
 
     return (
-        <div className="mt-2 pt-2 border-t border-gray-600">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="mt-2 border-t border-white/10 pt-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {fileParts.map((file, index) => (
-                    <div key={index} className="relative bg-zinc-700 rounded-lg p-2 min-w-20 flex-shrink-0">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-12 h-12 mb-1 flex items-center justify-center bg-zinc-600 rounded overflow-hidden">
-                                {file.data?.previewurl ? (
-                                    <img
-                                        src={file.data.previewurl}
-                                        alt={file.data?.filename || "File"}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <i
-                                        className={cn(
-                                            "fa text-lg text-gray-300",
-                                            getFileIcon(file.data?.filename || "", file.data?.mimetype || "")
-                                        )}
-                                    ></i>
-                                )}
-                            </div>
+                    <div
+                        key={index}
+                        className="flex min-w-0 max-w-[180px] flex-shrink-0 items-center gap-2 rounded-lg bg-white/10 p-1.5"
+                    >
+                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-600/80">
+                            {file.data?.previewurl ? (
+                                <img
+                                    src={file.data.previewurl}
+                                    alt={file.data?.filename || "File"}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <i
+                                    className={cn(
+                                        "fa text-sm text-gray-300",
+                                        getFileIcon(file.data?.filename || "", file.data?.mimetype || "")
+                                    )}
+                                ></i>
+                            )}
+                        </div>
+                        <div className="min-w-0">
                             <div
-                                className="text-[10px] text-gray-200 truncate w-full max-w-16"
+                                className="truncate text-[11px] leading-4 text-gray-100"
                                 title={file.data?.filename || t("File")}
                             >
                                 {file.data?.filename || t("File")}
@@ -118,13 +121,13 @@ const AIMessagePart = memo(({ part, role, isStreaming }: AIMessagePartProps) => 
         const content = part.text ?? "";
 
         if (role === "user") {
-            return <div className="whitespace-pre-wrap break-words">{content}</div>;
+            return <div className="whitespace-pre-wrap break-words leading-5">{content}</div>;
         } else {
             return (
                 <WaveStreamdown
                     text={content}
                     parseIncompleteMarkdown={isStreaming}
-                    className="text-gray-100"
+                    className="text-gray-100 leading-6"
                     codeBlockMaxWidthAtom={model.codeBlockMaxWidth}
                 />
             );
@@ -219,22 +222,24 @@ export const AIMessage = memo(({ message, isStreaming }: AIMessageProps) => {
     const groupedParts = groupMessageParts(displayParts);
 
     return (
-        <div className={cn("flex", message.role === "user" ? "justify-end" : "justify-start")}>
+        <div className={cn("flex w-full", message.role === "user" ? "justify-end" : "justify-start")}>
             <div
                 className={cn(
-                    "px-2 rounded-lg [&>*:first-child]:!mt-0",
+                    "[&>*:first-child]:!mt-0",
                     message.role === "user"
-                        ? "py-2 bg-zinc-700/60 text-white max-w-[calc(100%-50px)]"
-                        : "min-w-[min(100%,500px)]"
+                        ? "max-w-[min(82%,680px)] rounded-2xl bg-zinc-700/80 px-3 py-2 text-white shadow-sm"
+                        : "w-full max-w-[780px] px-1 py-1"
                 )}
             >
                 {displayParts.length === 0 && !isStreaming && !thinkingData ? (
-                    <div className="whitespace-pre-wrap break-words">(no text content)</div>
+                    <div className="whitespace-pre-wrap break-words text-sm text-muted">(no text content)</div>
                 ) : (
                     <>
                         {groupedParts.map((group, index: number) =>
                             group.type === "toolgroup" ? (
-                                <AIToolUseGroup key={index} parts={group.parts} isStreaming={isStreaming} />
+                                <div key={index} className="mt-2">
+                                    <AIToolUseGroup parts={group.parts} isStreaming={isStreaming} />
+                                </div>
                             ) : (
                                 <div key={index} className="mt-2">
                                     <AIMessagePart part={group.part} role={message.role} isStreaming={isStreaming} />
@@ -255,12 +260,14 @@ export const AIMessage = memo(({ message, isStreaming }: AIMessageProps) => {
 
                 {message.role === "user" && <UserMessageFiles fileParts={fileParts} />}
                 {message.role === "assistant" && !isStreaming && displayParts.length > 0 && (
-                    <AIFeedbackButtons
-                        messageText={parts
-                            .filter((p) => p.type === "text")
-                            .map((p) => p.text || "")
-                            .join("\n\n")}
-                    />
+                    <div className="mt-1 opacity-60 transition-opacity hover:opacity-100">
+                        <AIFeedbackButtons
+                            messageText={parts
+                                .filter((p) => p.type === "text")
+                                .map((p) => p.text || "")
+                                .join("\n\n")}
+                        />
+                    </div>
                 )}
             </div>
         </div>

@@ -2073,11 +2073,13 @@ declare global {
     type WaveAIChatHistoryEntry = {
         chatid: string;
         title: string;
+        createdts?: number;
         updatedts: number;
         apitype: string;
         model: string;
         apiversion?: string;
         messagecount: number;
+        sessionpath?: string;
     };
 
 

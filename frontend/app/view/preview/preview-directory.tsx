@@ -76,7 +76,7 @@ function DirectoryTableHeaderCell({ header }: DirectoryTableHeaderCellProps) {
 }
 
 declare module "@tanstack/react-table" {
-    interface TableMeta<TData extends RowData> {
+    interface TableMeta<_TData extends RowData> {
         updateName: (path: string, isDir: boolean) => void;
         newFile: () => void;
         newDirectory: () => void;
@@ -439,9 +439,7 @@ function TableBody({
             {(searchActive || search !== "") && (
                 <div className="flex rounded-[3px] py-1 px-2 bg-warning text-black" ref={warningBoxRef}>
                     <span>
-                        {search === ""
-                            ? t("Type to search (Esc to cancel)")
-                            : t('Searching "{search}"', { search })}
+                        {search === "" ? t("Type to search (Esc to cancel)") : t('Searching "{search}"', { search })}
                     </span>
                     <div
                         className="ml-auto bg-transparent flex justify-center items-center flex-col p-0.5 rounded-md hover:bg-hoverbg focus:bg-hoverbg focus-within:bg-hoverbg cursor-pointer"
@@ -506,11 +504,13 @@ type TableRowProps = {
 function TableRow({ model, row, focusIndex, setFocusIndex, setSearch, idx, handleFileContextMenu }: TableRowProps) {
     const dirPath = useAtomValue(model.statFilePath);
     const connection = useAtomValue(model.connection);
+    const filePath = row.getValue("path") as string;
+    const fileName = row.getValue("name") as string;
 
     const dragItem: DraggedFile = {
-        relName: row.getValue("name") as string,
+        relName: fileName,
         absParent: dirPath,
-        uri: formatRemoteUri(row.getValue("path") as string, connection),
+        uri: formatRemoteUri(filePath, connection),
         isDir: row.original.isdir,
     };
     const [_, drag] = useDrag(
@@ -534,8 +534,7 @@ function TableRow({ model, row, focusIndex, setFocusIndex, setSearch, idx, handl
             className={clsx("dir-table-body-row", { focused: focusIndex === idx })}
             data-rowindex={idx}
             onDoubleClick={() => {
-                const newFileName = row.getValue("path") as string;
-                model.goHistory(newFileName);
+                model.goHistory(filePath);
                 setSearch("");
                 globalStore.set(model.directorySearchActive, false);
             }}

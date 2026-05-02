@@ -19,38 +19,38 @@ export const AIDroppedFiles = memo(({ model }: AIDroppedFilesProps) => {
     }
 
     return (
-        <div className="p-2 border-b border-gray-600">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="px-2 pt-2">
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
                 {droppedFiles.map((file) => (
-                    <div key={file.id} className="relative bg-zinc-700 rounded-lg p-2 min-w-20 flex-shrink-0 group">
+                    <div
+                        key={file.id}
+                        className="relative flex max-w-[180px] flex-shrink-0 items-center gap-2 rounded-xl border border-zinc-600/70 bg-zinc-800/80 py-1.5 pl-1.5 pr-7 shadow-sm group"
+                    >
                         <button
                             onClick={() => model.removeFile(file.id)}
-                            className="absolute top-1 right-1 w-4 h-4 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            className="absolute right-1.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-zinc-700 hover:text-white cursor-pointer"
+                            aria-label={`Remove ${file.name}`}
                         >
                             <i className="fa fa-times text-xs"></i>
                         </button>
 
-                        <div className="flex flex-col items-center text-center">
-                            {file.previewUrl ? (
-                                <div className="w-12 h-12 mb-1">
-                                    <img
-                                        src={file.previewUrl}
-                                        alt={file.name}
-                                        className="w-full h-full object-cover rounded"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="w-12 h-12 mb-1 flex items-center justify-center bg-zinc-600 rounded">
-                                    <i
-                                        className={cn("fa text-lg text-gray-300", getFileIcon(file.name, file.type))}
-                                    ></i>
-                                </div>
-                            )}
+                        {file.previewUrl ? (
+                            <img
+                                src={file.previewUrl}
+                                alt={file.name}
+                                className="h-8 w-8 flex-shrink-0 rounded-lg object-cover"
+                            />
+                        ) : (
+                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-zinc-700">
+                                <i className={cn("fa text-sm text-gray-300", getFileIcon(file.name, file.type))}></i>
+                            </div>
+                        )}
 
-                            <div className="text-[10px] text-gray-200 truncate w-full max-w-16" title={file.name}>
+                        <div className="min-w-0">
+                            <div className="truncate text-[11px] leading-4 text-gray-100" title={file.name}>
                                 {file.name}
                             </div>
-                            <div className="text-[9px] text-gray-400">{formatFileSize(file.size)}</div>
+                            <div className="text-[10px] leading-3 text-gray-400">{formatFileSize(file.size)}</div>
                         </div>
                     </div>
                 ))}
