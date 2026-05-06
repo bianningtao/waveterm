@@ -559,7 +559,12 @@ function registerGlobalKeys() {
         const layoutModel = getLayoutModelForStaticTab();
         const focusedNode = globalStore.get(layoutModel.focusedNode);
         if (focusedNode != null) {
-            layoutModel.magnifyNodeToggle(focusedNode.id);
+            const ephemeralNode = globalStore.get(layoutModel.ephemeralNode);
+            if (ephemeralNode?.id === focusedNode.id) {
+                layoutModel.addEphemeralNodeToLayout();
+            } else {
+                layoutModel.magnifyNodeToggle(focusedNode.id);
+            }
         }
         return true;
     });
