@@ -234,8 +234,8 @@ const GitChangesView = memo(({ model }: ViewComponentProps<GitChangesViewModel>)
     }, [hasLoaded, refresh]);
 
     return (
-        <div className="flex h-full min-h-0 flex-col bg-background text-primary">
-            <div className="border-b border-border p-3">
+        <div className="@container flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-background text-primary">
+            <div className="w-full shrink-0 border-b border-border p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 text-sm font-semibold">
@@ -295,7 +295,7 @@ const GitChangesView = memo(({ model }: ViewComponentProps<GitChangesViewModel>)
             ) : status.files.length === 0 ? (
                 <div className="p-5 text-sm text-muted">{t("No Git changes.")}</div>
             ) : (
-                <div className="grid min-h-0 flex-1 grid-cols-[320px_minmax(0,1fr)] @max-w800:grid-cols-1">
+                <div className="grid min-h-0 w-full min-w-0 flex-1 grid-cols-[320px_minmax(0,1fr)] @max-w800:grid-cols-1">
                     <div className="min-h-0 overflow-auto border-r border-border @max-w800:max-h-64 @max-w800:border-b @max-w800:border-r-0">
                         {status.files.map((file) => (
                             <button
