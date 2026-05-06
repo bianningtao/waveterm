@@ -30,7 +30,7 @@ describe("makeContextAwareWidgetBlockDef", () => {
         });
     });
 
-    it("does not change non-terminal widgets", () => {
+    it("does not change widgets without directory context", () => {
         const widgetBlockDef: BlockDef = { meta: { view: "web", url: "https://example.com" } };
         const focusedMeta = { view: "term", "cmd:cwd": "/tmp/project" };
 
@@ -43,6 +43,24 @@ describe("makeContextAwareWidgetBlockDef", () => {
 
         expect(makeContextAwareWidgetBlockDef(widgetBlockDef, focusedMeta)).toEqual({
             meta: { view: "gitchanges", "cmd:cwd": "/tmp/project", connection: "local" },
+        });
+    });
+
+    it("opens file widgets in the focused terminal cwd", () => {
+        const widgetBlockDef: BlockDef = { meta: { view: "preview", file: "~" } };
+        const focusedMeta = { view: "term", "cmd:cwd": "/tmp/project", connection: "local" };
+
+        expect(makeContextAwareWidgetBlockDef(widgetBlockDef, focusedMeta)).toEqual({
+            meta: { view: "preview", file: "/tmp/project", connection: "local" },
+        });
+    });
+
+    it("opens file widgets next to the focused preview file", () => {
+        const widgetBlockDef: BlockDef = { meta: { view: "preview", file: "~" } };
+        const focusedMeta = { view: "preview", file: "/tmp/project/story.md" };
+
+        expect(makeContextAwareWidgetBlockDef(widgetBlockDef, focusedMeta)).toEqual({
+            meta: { view: "preview", file: "/tmp/project" },
         });
     });
 });

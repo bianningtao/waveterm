@@ -85,7 +85,7 @@ function getCwdFromFocusedMeta(focusedMeta?: MetaType | null): string | null {
 
 export function makeContextAwareWidgetBlockDef(blockDef: BlockDef, focusedMeta?: MetaType | null): BlockDef {
     const widgetView = blockDef?.meta?.view;
-    if (widgetView !== "term" && widgetView !== "gitchanges") {
+    if (widgetView !== "term" && widgetView !== "gitchanges" && widgetView !== "preview") {
         return blockDef;
     }
     const cwd = getCwdFromFocusedMeta(focusedMeta);
@@ -93,7 +93,11 @@ export function makeContextAwareWidgetBlockDef(blockDef: BlockDef, focusedMeta?:
         return blockDef;
     }
     const nextBlockDef = cloneBlockDef(blockDef);
-    nextBlockDef.meta["cmd:cwd"] = cwd;
+    if (widgetView === "preview") {
+        nextBlockDef.meta.file = cwd;
+    } else {
+        nextBlockDef.meta["cmd:cwd"] = cwd;
+    }
     if (nextBlockDef.meta.connection == null && focusedMeta?.connection != null) {
         nextBlockDef.meta.connection = focusedMeta.connection;
     }
